@@ -929,7 +929,7 @@
                     loadRankings();
                 }).catch(err => {
                     console.error("Score Error:", err);
-                    document.getElementById('leaderboard').innerHTML = "Error saving score.";
+                    document.getElementById('leaderboard').innerHTML = "점수 저장 실패";
                 });
             }
         }
@@ -937,7 +937,7 @@
         function loadRankings() {
             if (!db) return;
             const leaderboard = document.getElementById('leaderboard');
-            leaderboard.innerHTML = "<div style='text-align:center;'>Loading...</div>";
+            leaderboard.innerHTML = "<div style='text-align:center;'>순위 로딩 중...</div>";
 
             db.collection('ranrun_scores')
                 .orderBy('score', 'desc')
@@ -962,7 +962,7 @@
                 })
                 .catch(err => {
                     console.error("Error fetching rankings:", err);
-                    leaderboard.innerHTML = "Failed to load rankings.";
+                    leaderboard.innerHTML = "순위 로드 실패";
                 });
         }
 
@@ -993,8 +993,8 @@
 
         // TOUCH START (Global)
         document.addEventListener('touchstart', (e) => {
-            // Allow Button Clicks
-            if (e.target.closest('button')) return;
+            // Allow Button AND INPUT Clicks
+            if (e.target.closest('button') || e.target.closest('input')) return;
 
             // Prevent Default (Scroll/Zoom)
             if (e.cancelable) e.preventDefault();
@@ -1027,7 +1027,7 @@
 
         // MOUSE DOWN (PC)
         document.addEventListener('mousedown', (e) => {
-            if (e.target.closest('button')) return;
+            if (e.target.closest('button') || e.target.closest('input')) return;
             if (e.button === 0) { // Left Click
                 handleInput('jump');
             }
