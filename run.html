@@ -162,10 +162,39 @@
         <button id="pause-btn" onpointerdown="event.stopPropagation()" onclick="togglePause()">II</button>
     </div>
 
-    <div id="tutorial-msg" class="tutorial">
-        PC: SPACE=JUMP | DOWN=SLIDE<br>
-        MOBILE: TOUCH LEFT=JUMP | TOUCH RIGHT=SLIDE
+    <div id="start-screen" style="
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 50; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; color: white;
+        pointer-events: auto; /* Force clickable */
+    ">
+        <h1 style="font-size: 40px; margin-bottom: 20px; text-shadow: 2px 2px 0 #000;">RanRun</h1>
+        <div
+            style="font-size: 18px; text-align: center; margin-bottom: 30px; line-height: 1.5; text-shadow: 1px 1px 0 #000;">
+            PC: SPACE=JUMP | DOWN=SLIDE<br>
+            MOBILE: TOUCH LEFT=JUMP | TOUCH RIGHT=SLIDE
+        </div>
+        <button onclick="startGame()" style="
+            padding: 20px 50px; font-size: 30px; background: #ff69b4; color: white;
+            border: none; border-radius: 20px; box-shadow: 0 5px 0 #c2185b;
+            animation: pulse 1.5s infinite; cursor: pointer;
+        ">TAP TO START</button>
     </div>
+    <style>
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
 
     <div id="game-over">
         <h1 style="font-size:60px; margin-bottom:10px;">GAME OVER</h1>
@@ -770,6 +799,14 @@
         }
         function createSparkle(x, y, color) {
             for (let i = 0; i < 5; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 15, color: color });
+        }
+
+        // --- START SCREEN LOGIC ---
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            // Also hide game-over if it was somehow shown
+            document.getElementById('game-over').style.display = 'none';
+            resetGame();
         }
 
         // --- GLOBAL INPUT HANDLING (FAILSAFE) ---
