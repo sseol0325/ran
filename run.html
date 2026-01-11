@@ -1016,9 +1016,12 @@
                     // Admin Button (Bottom of list)
                     html += `
                         <div style="text-align:center; margin-top:10px;">
-                            <span onclick="cleanDuplicates()" style="font-size:12px; color:#aaa; cursor:pointer; text-decoration:underline;">
+                            <button onclick="cleanDuplicates()" style="
+                                background: none; border: none; padding: 0;
+                                font-size: 12px; color: #aaa; cursor: pointer; text-decoration: underline;
+                            ">
                                 [관리자: 랭킹 중복 정리]
-                            </span>
+                            </button>
                         </div>
                     `;
 
