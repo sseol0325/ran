@@ -170,11 +170,10 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        // --- PHYSICS CONFIG (TUNED) ---
-        // Jump high enough to clear 100px obstacles easily
-        const GRAVITY = 0.7;
-        const JUMP_POWER = -16; // Higher jump
-        const DOUBLE_JUMP_POWER = -14;
+        // --- PHYSICS CONFIG (TUNED 2.0) ---
+        const GRAVITY = 0.9;
+        const JUMP_POWER = -22; // Much Higher Jump
+        const DOUBLE_JUMP_POWER = -18;
         const SPEED_START = 8;
 
         // --- GAME VARIABLES ---
@@ -189,7 +188,7 @@
         // --- ENTITIES ---
         let player = {
             x: 100, y: 0, w: 60, h: 80, vy: 0,
-            state: 'run', // run, jump, slide, hurt
+            state: 'run',
             groundY: 0,
             isGrounded: false,
             jumpCount: 0,
@@ -204,7 +203,7 @@
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            player.groundY = canvas.height - 180; // Raise ground
+            player.groundY = canvas.height - 180;
             if (!isRunning) player.y = player.groundY;
         }
         window.addEventListener('resize', resize);
@@ -212,9 +211,18 @@
         function init() {
             resize();
             player.y = player.groundY;
-            document.body.focus(); // Ensure focus
-            window.addEventListener('click', () => { if (isRunning && !isPaused) jump(); }); // Click jump support
-            requestAnimationFrame(loop); // Idle loop for title screen if needed or just wait start
+
+            // Add Global Interaction Listener
+            ['mousedown', 'touchstart', 'keydown'].forEach(evt =>
+                window.addEventListener(evt, () => {
+                    if (!isRunning && document.getElementById('game-over').style.display === 'none') {
+                        // Only start if not game over and not running
+                        startFirst();
+                    }
+                }, { once: true })
+            );
+
+            if (frame === 0 && !isRunning) draw();
         }
 
         function resetGame() {
@@ -236,18 +244,17 @@
 
             isRunning = true;
             isPaused = false;
+            requestAnimationFrame(loop);
         }
 
         function togglePause() {
             if (!isRunning) return;
             isPaused = !isPaused;
+            if (!isPaused) requestAnimationFrame(loop);
         }
 
         function loop() {
-            requestAnimationFrame(loop);
-
             if (!isRunning) {
-                // Title Screen Render
                 if (frame === 0) draw();
                 return;
             }
@@ -255,18 +262,19 @@
 
             update();
             draw();
+            requestAnimationFrame(loop);
         }
 
         function update() {
             frame++;
-            speed = Math.min(20, SPEED_START + frame * 0.001); // Slower acceleration
+            speed = Math.min(25, SPEED_START + frame * 0.002);
             bgOffset += speed * 0.5;
             player.runFrame += 0.2;
 
             // --- PLAYER PHYSICS ---
             if (player.state === 'slide') {
                 player.h = 40;
-                if (player.isGrounded) player.y = player.groundY + 40; // Pin to ground visually
+                if (player.isGrounded) player.y = player.groundY + 40;
             } else {
                 player.h = 80;
             }
@@ -277,28 +285,23 @@
                 player.isGrounded = false;
                 if (player.state !== 'slide') player.state = 'jump';
             } else if (player.y >= player.groundY) {
-                // Landed
-                if (!player.isGrounded) {
-                    // Land effect?
-                    createDust(player.x, player.y + 80);
-                }
+                if (!player.isGrounded) createDust(player.x, player.y + 80);
+
                 player.y = player.groundY;
                 player.vy = 0;
                 player.isGrounded = true;
                 player.jumpCount = 0;
                 if (player.state === 'jump') player.state = 'run';
-
-                // If dragging on ground while meant to be normal height, correct Y
                 if (player.state !== 'slide') player.y = player.groundY;
             }
             player.y += player.vy;
 
             // --- SPAWN LOGIC ---
-            if (frame % Math.floor(1300 / speed) === 0) { // Spread out obstacles more
+            if (frame % Math.floor(1300 / speed) === 0) {
                 spawnObstacle();
             }
 
-            // --- MOVEMENT & CLEANUP ---
+            // --- MOVEMENT ---
             obstacles.forEach(o => o.x -= speed);
             items.forEach(i => i.x -= speed);
             particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.5; });
@@ -307,10 +310,8 @@
             items = items.filter(i => i.x + i.w > -100 && !i.collected);
             particles = particles.filter(p => p.life > 0);
 
-            // --- COLLISION ---
             checkCollisions();
 
-            // --- SCORE & HP ---
             score += speed * 0.01;
             document.getElementById('score-box').innerText = Math.floor(score);
             document.getElementById('hp-fill').style.width = hp + '%';
@@ -328,7 +329,7 @@
             } else if (player.jumpCount < 2) {
                 player.vy = DOUBLE_JUMP_POWER;
                 player.jumpCount = 2;
-                createSparkle(player.x, player.y + 40, '#fff'); // Double jump flash
+                createSparkle(player.x, player.y + 40, '#fff');
             }
         }
 
@@ -337,33 +338,27 @@
             const x = canvas.width + 100;
             const ground = player.groundY;
 
-            // Easier logic: Ensure obstacles are jumpable
             if (type < 0.5) {
-                // Ground Obstacle
-                // Height limited to 70 (Player jump ~200+)
+                // Ground Obstacle (Easy jump)
                 obstacles.push({
-                    x: x, y: ground + 10, // slightly buried
+                    x: x, y: ground + 10,
                     w: 50, h: 70,
                     type: Math.random() < 0.5 ? 'spike' : 'block'
                 });
                 spawnItems(x, ground - 130);
             } else {
-                // Sky Obstacle
-                // Height: Player must slide or just jump over? 
-                // Let's make sky platforms to jump ON or UNDER
-                // But for runner, flying obstacles to avoid are common.
-                // Let's place it High enough to run under? Or low enough to jump over?
+                // Hanging Block (Must Slide or Jump perfectly?)
+                // Let's make it clearer: High enough to run under? No standard runner implies slide under floating blocks.
+                // If y = ground - 110. Player H=80. 110 > 80. Can run under?
+                // Let's make it lower to FORCE slide.
+                // y = ground - 70. Player H=80. Collision. Slide H=40. OK.
                 obstacles.push({
-                    x: x, y: ground - 90, // Jump to hit, Run under? No, collision.
-                    // Making "Hanging" block. Player must SLIDE.
-                    w: 60, h: 100,
+                    x: x, y: ground - 70,
+                    w: 60, h: 60,
                     type: 'hanging'
                 });
-                // Make sure hanging is high enough to slide under
-                obstacles[obstacles.length - 1].y = ground - 110; // Bottom at ground - 10.
-                // Wait, y is top-left.
-                // Hanging block: y = ground - 100. h = 60. Bottom = ground - 40.
-                // Player slide h = 40.
+                // Warn with coins under
+                spawnItems(x, ground + 20);
             }
         }
 
@@ -378,7 +373,6 @@
         }
 
         function checkCollisions() {
-            // Player Hitbox (Forgiving)
             const p = {
                 x: player.x + 15, y: player.y + 10,
                 w: player.w - 30, h: player.state === 'slide' ? 30 : player.h - 10
@@ -386,13 +380,8 @@
 
             obstacles.forEach(o => {
                 if (o.hit) return;
-                // Custom Hitbox for Hanging
+                // Hanging hitbox fix
                 let oRect = { x: o.x, y: o.y, w: o.w, h: o.h };
-                if (o.type === 'hanging') {
-                    // It hangs from top? No, just a floating block.
-                    // If it's meant to be slide-under, it should be at head level.
-                    // y = ground - 90. 
-                }
 
                 if (intersect(p, oRect)) {
                     o.hit = true;
@@ -433,16 +422,13 @@
 
         // --- DRAWING ---
         function draw() {
-            // Sky
             ctx.fillStyle = '#AEE4FF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             drawBackground();
 
-            // Ground
             ctx.fillStyle = '#8B4513';
             ctx.fillRect(0, player.groundY + 80, canvas.width, canvas.height);
-            // Grass
             ctx.fillStyle = '#7CFC00';
             ctx.beginPath();
             ctx.moveTo(0, player.groundY + 80);
@@ -465,7 +451,6 @@
         }
 
         function drawBackground() {
-            // Hills
             ctx.fillStyle = '#90EE90';
             ctx.beginPath();
             ctx.moveTo(0, canvas.height);
@@ -483,22 +468,19 @@
             ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
             if (player.state === 'hurt') ctx.globalAlpha = 0.5;
 
-            // CUTE GIRL CHARACTER
-            // Scale: w60, h80
-
-            // Bobbing animation
+            // --- CHARACTER: BLACK HAIR / BLUE DRESS ---
             let bob = Math.sin(player.runFrame) * 3;
             if (player.state !== 'run') bob = 0;
             if (player.state === 'jump') bob = -5;
 
-            // 1. Hair (Back)
-            ctx.fillStyle = '#ffcc00'; // Blonde
+            // 1. Hair (Back) - Black
+            ctx.fillStyle = '#111'; // Black
             ctx.beginPath();
-            ctx.arc(0, -25 + bob, 25, 0, Math.PI * 2); // Big fluff
+            ctx.arc(0, -25 + bob, 25, 0, Math.PI * 2);
             ctx.fill();
 
-            // 2. Body / Dress
-            ctx.fillStyle = '#ff69b4'; // Hot Pink Dress
+            // 2. Body / Dress - Blue
+            ctx.fillStyle = '#2563eb'; // Blue
             ctx.beginPath();
             ctx.moveTo(0, -10 + bob);
             ctx.lineTo(-15, 30 + bob);
@@ -506,7 +488,7 @@
             ctx.fill();
 
             // 3. Head
-            ctx.fillStyle = '#ffe0bd'; // Skin
+            ctx.fillStyle = '#ffe0bd';
             ctx.beginPath();
             ctx.arc(0, -20 + bob, 15, 0, Math.PI * 2);
             ctx.fill();
@@ -516,15 +498,15 @@
             if (player.state === 'hurt') {
                 ctx.fillText('><', -5, -18 + bob);
             } else {
-                ctx.beginPath(); ctx.arc(-5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill(); // Eye L
-                ctx.beginPath(); ctx.arc(5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill(); // Eye R
-                ctx.fillStyle = '#ffaaaa'; // Blush
+                ctx.beginPath(); ctx.arc(-5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#ffaaaa';
                 ctx.beginPath(); ctx.arc(-8, -15 + bob, 2, 0, Math.PI * 2); ctx.fill();
                 ctx.beginPath(); ctx.arc(8, -15 + bob, 2, 0, Math.PI * 2); ctx.fill();
             }
 
-            // 5. Hair (Front/Bangs)
-            ctx.fillStyle = '#ffcc00';
+            // 5. Hair (Front) - Black
+            ctx.fillStyle = '#111';
             ctx.beginPath();
             ctx.arc(-10, -25 + bob, 8, 0, Math.PI * 2);
             ctx.arc(10, -25 + bob, 8, 0, Math.PI * 2);
@@ -533,24 +515,20 @@
             // 6. Limbs
             ctx.strokeStyle = '#ffe0bd';
             ctx.lineWidth = 4;
-            // Arms
             ctx.beginPath(); ctx.moveTo(-10, -5 + bob); ctx.lineTo(-20, 10 + bob - (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 20)); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(10, -5 + bob); ctx.lineTo(20, 10 + bob + (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 0)); ctx.stroke();
 
-            // Legs
-            ctx.strokeStyle = '#fff'; // Socks
-            // Run cycle
+            ctx.strokeStyle = '#fff';
             let legL = player.state === 'run' ? Math.sin(player.runFrame) * 15 : 0;
             let legR = player.state === 'run' ? Math.sin(player.runFrame + Math.PI) * 15 : 0;
-
-            if (player.state === 'jump') { legL = -10; legR = 10; } // Jump pose
-            if (player.state === 'slide') { legL = 20; legR = 20; ctx.rotate(-1.5); } // Slide pose
+            if (player.state === 'jump') { legL = -10; legR = 10; }
+            if (player.state === 'slide') { legL = 20; legR = 20; ctx.rotate(-1.5); }
 
             ctx.beginPath(); ctx.moveTo(-5, 30 + bob); ctx.lineTo(-5 + legL, 40 + bob); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(5, 30 + bob); ctx.lineTo(5 + legR, 40 + bob); ctx.stroke();
 
-            // Shoes
-            ctx.fillStyle = '#db2777';
+            // Shoes - Darker Blue
+            ctx.fillStyle = '#1e3a8a';
             ctx.beginPath(); ctx.arc(-5 + legL, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(5 + legR, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
 
@@ -568,25 +546,21 @@
             } else if (o.type === 'block') {
                 ctx.fillStyle = '#8B4513';
                 ctx.fillRect(o.x, o.y, o.w, o.h);
-                // Wood texture
                 ctx.strokeStyle = '#5D4037'; ctx.beginPath(); ctx.moveTo(o.x + 5, o.y); ctx.lineTo(o.x + 5, o.y + o.h); ctx.stroke();
             } else if (o.type === 'hanging') {
                 ctx.fillStyle = '#607D8B';
                 ctx.fillRect(o.x, o.y, o.w, o.h);
-                // Chain
                 ctx.strokeStyle = '#000'; ctx.beginPath(); ctx.moveTo(o.x + o.w / 2, o.y); ctx.lineTo(o.x + o.w / 2, 0); ctx.stroke();
             }
         }
 
         function drawItem(i) {
-            // ... same as before but cuter colors ...
-            if (i.type === 'coin') {
-                ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 12, 0, Math.PI * 2); ctx.fill();
-            } else if (i.type === 'jelly') {
-                ctx.fillStyle = '#FF69B4'; ctx.fillRect(i.x + 5, i.y + 5, 20, 20);
-            } else if (i.type === 'potion') {
-                ctx.fillStyle = '#F00'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 10, 0, Math.PI * 2); ctx.fill();
-            }
+            ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 12, 0, Math.PI * 2); ctx.fill();
+        } else if (i.type === 'jelly') {
+            ctx.fillStyle = '#FF69B4'; ctx.fillRect(i.x + 5, i.y + 5, 20, 20);
+        } else if (i.type === 'potion') {
+            ctx.fillStyle = '#F00'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 10, 0, Math.PI * 2); ctx.fill();
+        }
         }
 
         function createDust(x, y) {
