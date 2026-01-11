@@ -286,28 +286,48 @@
 
         // --- INIT & LOOP ---
         function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            // "Mobile Zoom Out" Logic
+            // If screen is narrow (mobile), we map a larger internal resolution 
+            // to the small screen so the player can see further ahead.
+            const MIN_WIDTH = 1200;
+            let w = window.innerWidth;
+            let h = window.innerHeight;
+
+            if (w < MIN_WIDTH) {
+                // Determine scale to fit MIN_WIDTH into 'w'
+                const scale = MIN_WIDTH / w;
+                canvas.width = MIN_WIDTH;
+                canvas.height = h * scale; // Keep aspect ratio consistent
+            } else {
+                canvas.width = w;
+                canvas.height = h;
+            }
+
+            // Ground is relative to internal height
             player.groundY = canvas.height - 180;
+
+            // Adjust player y if waiting
             if (!isRunning) player.y = player.groundY;
         }
         window.addEventListener('resize', resize);
 
+        // Call immediately
+        resize();
+
         function init() {
+            // Resize already called above, but good to ensure
             resize();
             player.y = player.groundY;
 
             // Add Global Interaction Listener
             ['mousedown', 'touchstart', 'keydown'].forEach(evt =>
                 window.addEventListener(evt, () => {
-                    if (!isRunning && document.getElementById('game-over').style.display === 'none') {
-                        // Only start if not game over and not running
-                        startFirst();
-                    }
+                    // ... (Passive listener removed, handling in handleInput/StartScreen now)
                 }, { once: true })
             );
 
-            if (frame === 0 && !isRunning) {
+            if (frame === 0 && !isRunning && document.getElementById('start-screen').style.display !== 'none') {
+                // Draw initial frame (paused state)
                 requestAnimationFrame(draw);
             }
         }
