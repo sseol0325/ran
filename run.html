@@ -399,17 +399,15 @@
                     });
                 }
             } else {
-                // Hanging Wall (Slide)
+                // Hanging Wall (Slide) - Raised higher for safe slide
                 obstacles.push({
-                    x: x, y: ground - 70,
+                    x: x, y: ground - 100, // Raised to -100 (gap 20px above head)
                     w: 60, h: 80,
                     type: 'hanging'
                 });
                 spawnItems(x, ground + 20);
             }
         }
-
-        // ... [spawnObstacle above] ...
 
         function spawnItems(x, y) {
             for (let i = 0; i < 3; i++) {
@@ -436,14 +434,25 @@
         }
 
         function checkCollisions() {
+            // Hitbox Logic:
+            // Standing: Top-ish box
+            // Slide: Bottom box (y + 40)
+            let py = player.y + 10;
+            let ph = player.h - 10;
+
+            if (player.state === 'slide') {
+                py = player.y + 40; // Shift hitbox down to ground level
+                ph = 40;
+            }
+
             const p = {
-                x: player.x + 15, y: player.y + 10,
-                w: player.w - 30, h: player.state === 'slide' ? 30 : player.h - 10
+                x: player.x + 20, y: py,
+                w: player.w - 40, h: ph
             };
 
             obstacles.forEach(o => {
                 if (o.hit) return;
-                let oRect = { x: o.x, y: o.y, w: o.w, h: o.h };
+                let oRect = { x: o.x + 5, y: o.y + 5, w: o.w - 10, h: o.h - 10 }; // Shrink obstacle hitbox slightly
                 if (intersect(p, oRect)) {
                     o.hit = true;
                     takeDamage();
