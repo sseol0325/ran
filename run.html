@@ -772,19 +772,21 @@
             for (let i = 0; i < 5; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 15, color: color });
         }
 
-        // --- HYBRID INPUT HANDLING (ROBUST) ---
-        // Reverting to explicit Touch + Mouse for maximum compatibility
+        // --- GLOBAL INPUT HANDLING (FAILSAFE) ---
+        // Attaching to document to bypass any z-index or overlay blocking issues
 
         function handleInput(type) {
+            // 1. GAME START LOGIC
             if (!isRunning) {
-                // Start game on ANY input if not running and no game over screen
+                // If Game Over screen is NOT visible, any touch starts the game
                 if (document.getElementById('game-over').style.display === 'none') {
-                    if (frame === 0) startFirst(); // Initial validation
-                    else if (isPaused) togglePause(); // Unpause if paused
+                    if (frame === 0) startFirst();
+                    else if (isPaused) togglePause();
                 }
                 return;
             }
 
+            // 2. GAMEPLAY LOGIC
             if (type === 'jump') jump();
             if (type === 'slide_down') {
                 player.state = 'slide';
@@ -795,39 +797,49 @@
             }
         }
 
-        // 1. TOUCH EVENTS (Mobile)
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Stop Scroll/Zoom
-            // Use changedTouches to handle simultaneous multi-touch
+        // TOUCH START (Global)
+        document.addEventListener('touchstart', (e) => {
+            // Allow Button Clicks
+            if (e.target.closest('button')) return;
+
+            // Prevent Default (Scroll/Zoom)
+            if (e.cancelable) e.preventDefault();
+
+            // Handle Multi-touch
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 if (t.clientX < window.innerWidth / 2) {
-                    handleInput('jump');
+                    handleInput('jump'); // Left = Jump
                 } else {
-                    handleInput('slide_down');
+                    handleInput('slide_down'); // Right = Slide
                 }
             }
         }, { passive: false });
 
-        canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
+        // TOUCH END (Global)
+        document.addEventListener('touchend', (e) => {
+            if (e.target.closest('button')) return;
+
+            // if (e.cancelable) e.preventDefault(); // Optional on end
+
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
+                // If lifting from Right side, Stop Slide
                 if (t.clientX >= window.innerWidth / 2) {
                     handleInput('slide_up');
                 }
             }
         });
 
-        // 2. MOUSE EVENTS (PC)
-        canvas.addEventListener('mousedown', (e) => {
-            // Left Click only
-            if (e.button === 0) {
+        // MOUSE DOWN (PC)
+        document.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button')) return;
+            if (e.button === 0) { // Left Click
                 handleInput('jump');
             }
         });
 
-        // 3. KEYBOARD EVENTS (PC)
+        // KEYBOARD (PC)
         window.addEventListener('keydown', e => {
             const code = e.code;
 
