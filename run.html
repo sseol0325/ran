@@ -767,9 +767,10 @@
         // --- INPUT HANDLING (FIXED) ---
         function handleInput(type) {
             if (!isRunning) {
-                if (frame === 0 || document.getElementById('game-over').style.display !== 'none') {
-                    if (document.getElementById('game-over').style.display !== 'none') resetGame();
-                    else startFirst();
+                // Only allow start on initial load (frame 0). 
+                // Game Over restart is handled by button or specific key check.
+                if (frame === 0 && document.getElementById('game-over').style.display === 'none') {
+                    startFirst();
                 }
                 return;
             }
@@ -785,8 +786,13 @@
         }
 
         window.addEventListener('keydown', e => {
-            // Log code for debugging (invisible to user but logic follows)
             const code = e.code;
+
+            // RESTART Logic for Spacebar (Classic feel)
+            if ((code === 'Space' || code === 'Enter') && document.getElementById('game-over').style.display !== 'none') {
+                resetGame();
+                return;
+            }
 
             // JUMP: Space, ArrowUp, W
             if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW' || e.key === ' ') {
@@ -802,24 +808,24 @@
         });
 
         window.addEventListener('keyup', e => {
-            if (e.code === 'ArrowDown' || e.code === 'KeyS') { // Fixed: use e.code here
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') {
                 handleInput('slide_up');
             }
         });
 
         // Touch / Mouse Support
         // --- MOBILE CONTROLS (SPLIT SCREEN) ---
-        // Left Half: Slide (Hold)
-        // Right Half: Jump (Tap)
+        // Left Half: Jump (Tap)
+        // Right Half: Slide (Hold)
 
         document.addEventListener('touchstart', (e) => {
             e.preventDefault(); // Prevent scrolling/zooming
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 if (t.clientX < window.innerWidth / 2) {
-                    handleInput('slide_down');
+                    handleInput('jump'); // LEFT = JUMP
                 } else {
-                    handleInput('jump');
+                    handleInput('slide_down'); // RIGHT = SLIDE
                 }
             }
         }, { passive: false });
@@ -828,8 +834,8 @@
             e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
-                if (t.clientX < window.innerWidth / 2) {
-                    handleInput('slide_up');
+                if (t.clientX >= window.innerWidth / 2) {
+                    handleInput('slide_up'); // RIGHT = SLIDE UP
                 }
             }
         });
