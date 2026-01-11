@@ -950,9 +950,11 @@
         }
 
         // --- START SCREEN LOGIC ---
+        // --- START SCREEN LOGIC ---
         function startGame() {
             const nickInput = document.getElementById('nickname');
             const name = nickInput.value.trim();
+            const startBtn = document.querySelector('#start-screen button'); // Get the button
 
             if (!name) {
                 alert("닉네임을 입력해주세요!");
@@ -960,30 +962,63 @@
                 return;
             }
 
+            // UI Feedback
+            startBtn.disabled = true;
+            const originalBtnText = startBtn.innerText;
+            startBtn.innerText = "접속 중...";
+
+            // Helper to proceed and restore UI
+            const doProceed = () => {
+                startBtn.innerText = originalBtnText; // Restore text just in case
+                startBtn.disabled = false;
+                proceedGame(name);
+            };
+
             // Check correctness/duplication
             const savedName = localStorage.getItem('ranrun_nickname');
 
             // If name is same as saved, skip check (it's me)
             if (name === savedName) {
-                proceedGame(name);
+                doProceed();
                 return;
             }
 
-            // Check DB for duplicate
+            // Check DB for duplicate (with Timeout)
             if (db) {
+                let isComplete = false;
+
+                // Timeout Fallback (3 seconds)
+                const timeoutId = setTimeout(() => {
+                    if (!isComplete) {
+                        isComplete = true;
+                        console.warn("Nickname check timed out. Proceeding anyway.");
+                        doProceed();
+                    }
+                }, 3000);
+
                 db.collection('ranrun_scores').doc(name).get().then(doc => {
+                    if (isComplete) return; // Already timed out
+                    isComplete = true;
+                    clearTimeout(timeoutId);
+
                     if (doc.exists) {
                         alert("이미 존재하는 닉네임입니다. 다른 이름을 사용해주세요.");
+                        startBtn.innerText = originalBtnText;
+                        startBtn.disabled = false;
                     } else {
-                        proceedGame(name);
+                        doProceed();
                     }
                 }).catch(err => {
+                    if (isComplete) return;
+                    isComplete = true;
+                    clearTimeout(timeoutId);
+
                     console.error("Available check error", err);
-                    // Fallback: allow play if offline, but might fail save
-                    proceedGame(name);
+                    // Fallback: allow play if offline
+                    doProceed();
                 });
             } else {
-                proceedGame(name);
+                doProceed();
             }
         }
 
