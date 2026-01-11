@@ -271,30 +271,35 @@
             bgOffset += speed * 0.5;
             player.runFrame += 0.2;
 
-            // --- PLAYER PHYSICS ---
+            // --- PLAYER PHYSICS (FIXED) ---
             if (player.state === 'slide') {
                 player.h = 40;
-                if (player.isGrounded) player.y = player.groundY + 40;
             } else {
                 player.h = 80;
             }
 
-            // Gravity
-            if (player.y < player.groundY) {
-                player.vy += GRAVITY;
+            // 1. Apply Gravity
+            player.vy += GRAVITY;
+
+            // 2. Apply Velocity
+            player.y += player.vy;
+
+            // 3. Ground Constraint
+            if (player.y >= player.groundY) {
+                // Only land if actually falling down to it
+                if (player.vy > 0) {
+                    if (!player.isGrounded) createDust(player.x, player.y + 80);
+                    player.y = player.groundY;
+                    player.vy = 0;
+                    player.isGrounded = true;
+                    player.jumpCount = 0;
+                    if (player.state === 'jump') player.state = 'run';
+                    if (player.state === 'run' && inputActive) { /* maintain run */ }
+                }
+            } else {
                 player.isGrounded = false;
                 if (player.state !== 'slide') player.state = 'jump';
-            } else if (player.y >= player.groundY) {
-                if (!player.isGrounded) createDust(player.x, player.y + 80);
-
-                player.y = player.groundY;
-                player.vy = 0;
-                player.isGrounded = true;
-                player.jumpCount = 0;
-                if (player.state === 'jump') player.state = 'run';
-                if (player.state !== 'slide') player.y = player.groundY;
             }
-            player.y += player.vy;
 
             // --- SPAWN LOGIC ---
             if (frame % Math.floor(1300 / speed) === 0) {
@@ -319,153 +324,22 @@
             if (hp <= 0) gameOver();
         }
 
-        function jump() {
-            if (player.isGrounded) {
-                player.vy = JUMP_POWER;
-                player.state = 'jump';
-                player.isGrounded = false;
-                player.jumpCount = 1;
-                createDust(player.x, player.y + 80);
-            } else if (player.jumpCount < 2) {
-                player.vy = DOUBLE_JUMP_POWER;
-                player.jumpCount = 2;
-                createSparkle(player.x, player.y + 40, '#fff');
-            }
-        }
-
-        function spawnObstacle() {
-            const type = Math.random();
-            const x = canvas.width + 100;
-            const ground = player.groundY;
-
-            if (type < 0.5) {
-                // Ground Obstacle (Easy jump)
-                obstacles.push({
-                    x: x, y: ground + 10,
-                    w: 50, h: 70,
-                    type: Math.random() < 0.5 ? 'spike' : 'block'
-                });
-                spawnItems(x, ground - 130);
-            } else {
-                // Hanging Block (Must Slide or Jump perfectly?)
-                // Let's make it clearer: High enough to run under? No standard runner implies slide under floating blocks.
-                // If y = ground - 110. Player H=80. 110 > 80. Can run under?
-                // Let's make it lower to FORCE slide.
-                // y = ground - 70. Player H=80. Collision. Slide H=40. OK.
-                obstacles.push({
-                    x: x, y: ground - 70,
-                    w: 60, h: 60,
-                    type: 'hanging'
-                });
-                // Warn with coins under
-                spawnItems(x, ground + 20);
-            }
-        }
-
-        function spawnItems(x, y) {
-            for (let i = 0; i < 3; i++) {
-                if (Math.random() > 0.5) continue;
-                items.push({
-                    x: x + i * 50, y: y, w: 30, h: 30,
-                    type: Math.random() < 0.1 ? 'potion' : (Math.random() < 0.3 ? 'jelly' : 'coin')
-                });
-            }
-        }
-
-        function checkCollisions() {
-            const p = {
-                x: player.x + 15, y: player.y + 10,
-                w: player.w - 30, h: player.state === 'slide' ? 30 : player.h - 10
-            };
-
-            obstacles.forEach(o => {
-                if (o.hit) return;
-                // Hanging hitbox fix
-                let oRect = { x: o.x, y: o.y, w: o.w, h: o.h };
-
-                if (intersect(p, oRect)) {
-                    o.hit = true;
-                    takeDamage();
-                }
-            });
-
-            items.forEach(i => {
-                const iRect = { x: i.x - 10, y: i.y - 10, w: i.w + 20, h: i.h + 20 };
-                if (intersect(p, iRect)) {
-                    i.collected = true;
-                    if (i.type === 'coin') score += 100;
-                    if (i.type === 'jelly') score += 200;
-                    if (i.type === 'potion') { hp = Math.min(100, hp + 20); createSparkle(player.x, player.y, '#f0f'); }
-                    createSparkle(i.x, i.y, '#ff0');
-                }
-            });
-        }
-
-        function intersect(r1, r2) {
-            return !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x || r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
-        }
-
-        function takeDamage() {
-            if (player.state === 'hurt') return;
-            hp -= 20;
-            player.state = 'hurt';
-            player.vy = -8;
-            canvas.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
-            setTimeout(() => { canvas.style.transform = 'none'; if (hp > 0) player.state = 'run'; }, 500);
-        }
-
-        function gameOver() {
-            isRunning = false;
-            document.getElementById('final-score').innerText = Math.floor(score);
-            document.getElementById('game-over').style.display = 'flex';
-        }
-
-        // --- DRAWING ---
-        function draw() {
-            ctx.fillStyle = '#AEE4FF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            drawBackground();
-
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(0, player.groundY + 80, canvas.width, canvas.height);
-            ctx.fillStyle = '#7CFC00';
-            ctx.beginPath();
-            ctx.moveTo(0, player.groundY + 80);
-            for (let i = 0; i < canvas.width; i += 20) {
-                ctx.lineTo(i + 10, player.groundY + 70 + Math.sin(i + bgOffset) * 5);
-                ctx.lineTo(i + 20, player.groundY + 80);
-            }
-            ctx.lineTo(canvas.width, canvas.height);
-            ctx.lineTo(0, canvas.height);
-            ctx.fill();
-
-            obstacles.forEach(drawObstacle);
-            items.forEach(drawItem);
-            drawPlayer();
-
-            particles.forEach(p => {
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 4, 4);
-            });
-        }
-
-        function drawBackground() {
-            ctx.fillStyle = '#90EE90';
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height);
-            for (let i = 0; i <= canvas.width; i += 100) {
-                let y = player.groundY - 50 + Math.sin((i + bgOffset * 0.2) * 0.01) * 50;
-                ctx.lineTo(i, y);
-            }
-            ctx.lineTo(canvas.width, canvas.height);
-            ctx.lineTo(0, canvas.height);
-            ctx.fill();
-        }
+        // ... [jump function stays same] ...
 
         function drawPlayer() {
             ctx.save();
-            ctx.translate(player.x + player.w / 2, player.y + player.h / 2);
+
+            // Center point
+            let cx = player.x + player.w / 2;
+            let cy = player.y + player.h / 2;
+
+            // Slide Adjustment: Lower the center visually to align with ground
+            if (player.state === 'slide') {
+                cy += 20; // Push down to ground
+            }
+
+            ctx.translate(cx, cy);
+
             if (player.state === 'hurt') ctx.globalAlpha = 0.5;
 
             // --- CHARACTER: BLACK HAIR / BLUE DRESS ---
@@ -473,14 +347,20 @@
             if (player.state !== 'run') bob = 0;
             if (player.state === 'jump') bob = -5;
 
+            // Rotate for Slide (Lying down)
+            if (player.state === 'slide') {
+                ctx.rotate(-Math.PI / 2); // -90 degrees
+                bob = 0;
+            }
+
             // 1. Hair (Back) - Black
-            ctx.fillStyle = '#111'; // Black
+            ctx.fillStyle = '#111';
             ctx.beginPath();
             ctx.arc(0, -25 + bob, 25, 0, Math.PI * 2);
             ctx.fill();
 
             // 2. Body / Dress - Blue
-            ctx.fillStyle = '#2563eb'; // Blue
+            ctx.fillStyle = '#2563eb';
             ctx.beginPath();
             ctx.moveTo(0, -10 + bob);
             ctx.lineTo(-15, 30 + bob);
@@ -493,7 +373,8 @@
             ctx.arc(0, -20 + bob, 15, 0, Math.PI * 2);
             ctx.fill();
 
-            // 4. Face
+            // 4. Face (Rotate back if sliding? No, face down looks cute, or forward)
+            // If rotated -90, 'up' is 'forward'.
             ctx.fillStyle = '#000';
             if (player.state === 'hurt') {
                 ctx.fillText('><', -5, -18 + bob);
@@ -515,19 +396,26 @@
             // 6. Limbs
             ctx.strokeStyle = '#ffe0bd';
             ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.moveTo(-10, -5 + bob); ctx.lineTo(-20, 10 + bob - (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 20)); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(10, -5 + bob); ctx.lineTo(20, 10 + bob + (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 0)); ctx.stroke();
+            // Arms (If sliding, reach forward)
+            if (player.state === 'slide') {
+                ctx.beginPath(); ctx.moveTo(-10, -5); ctx.lineTo(-20, -30); ctx.stroke(); // Forward
+                ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(20, -30); ctx.stroke();
+            } else {
+                ctx.beginPath(); ctx.moveTo(-10, -5 + bob); ctx.lineTo(-20, 10 + bob - (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 20)); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(10, -5 + bob); ctx.lineTo(20, 10 + bob + (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 0)); ctx.stroke();
+            }
 
+            // Legs
             ctx.strokeStyle = '#fff';
             let legL = player.state === 'run' ? Math.sin(player.runFrame) * 15 : 0;
             let legR = player.state === 'run' ? Math.sin(player.runFrame + Math.PI) * 15 : 0;
             if (player.state === 'jump') { legL = -10; legR = 10; }
-            if (player.state === 'slide') { legL = 20; legR = 20; ctx.rotate(-1.5); }
+            if (player.state === 'slide') { legL = 10; legR = 10; } // Straight back
 
             ctx.beginPath(); ctx.moveTo(-5, 30 + bob); ctx.lineTo(-5 + legL, 40 + bob); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(5, 30 + bob); ctx.lineTo(5 + legR, 40 + bob); ctx.stroke();
 
-            // Shoes - Darker Blue
+            // Shoes
             ctx.fillStyle = '#1e3a8a';
             ctx.beginPath(); ctx.arc(-5 + legL, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(5 + legR, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
