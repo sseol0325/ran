@@ -839,13 +839,79 @@
 
         let currentNickname = "Anonymous";
 
-        // Pre-fill nickname from LocalStorage
+        // Pre-fill nickname from LocalStorage AND Load Rankings
         window.addEventListener('load', () => {
             const savedName = localStorage.getItem('ranrun_nickname');
             if (savedName) {
                 document.getElementById('nickname').value = savedName;
             }
+            loadRankings(); // Load rankings on start
         });
+
+        // ...
+
+        // --- RANKING CLEANUP TOOL ---
+        async function cleanDuplicates() {
+            if (!db) return;
+            const password = prompt("관리자 비밀번호를 입력하세요 (이 기능을 실행하면 중복 기록이 삭제됩니다)"); // Removed default "1234"
+            if (password !== "1234") return alert("비밀번호가 틀렸습니다.");
+
+            if (!confirm("정말로 랭킹 중복을 정리하시겠습니까?\n모든 플레이어의 최고 점수 1개만 남기고 나머지는 삭제됩니다.")) return;
+
+            // ... (rest same)
+        }
+
+        function loadRankings() {
+            if (!db) return;
+            // Update BOTH leaderboards
+            const targets = [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')];
+            
+            targets.forEach(el => {
+                if (el) el.innerHTML = "<div style='text-align:center;'>순위 로딩 중...</div>";
+            });
+            
+            db.collection('ranrun_scores')
+                .orderBy('score', 'desc')
+                .limit(10)
+                .get()
+                .then(snapshot => {
+                    let html = "";
+                    let rank = 1;
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isMe = data.name === currentNickname; 
+                        html += `
+                            <div class="rank-item" style="${isMe ? 'color:#ffff00; font-weight:bold;' : 'color:#eee;'}">
+                                <span>${rank}. ${data.name}</span>
+                                <span>${data.score}</span>
+                            </div>
+                        `;
+                        rank++;
+                    });
+                    
+                    // Admin Button (Bottom of list)
+                    html += `
+                        <div style="text-align:center; margin-top:10px;">
+                            <button onclick="cleanDuplicates()" style="
+                                background: none; border: none; padding: 0;
+                                font-size: 12px; color: #aaa; cursor: pointer; text-decoration: underline;
+                            ">
+                                [관리자: 랭킹 중복 정리]
+                            </button>
+                        </div>
+                    `;
+                    
+                    targets.forEach(el => {
+                        if (el) el.innerHTML = html;
+                    });
+                })
+                .catch(err => {
+                    console.error("Error fetching rankings:", err);
+                    targets.forEach(el => {
+                        if (el) el.innerHTML = "순위 로드 실패";
+                    });
+                });
+        }
 
         // --- START SCREEN LOGIC ---
         function startGame() {
