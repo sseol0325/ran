@@ -571,31 +571,60 @@
             for (let i = 0; i < 5; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 15, color: color });
         }
 
-        // --- INPUT ---
-        // Prevent default scrolling
-        window.addEventListener('keydown', e => {
-            if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
-
-            if (!isRunning && e.code === 'Space') {
-                if (document.getElementById('game-over').style.display !== 'none') resetGame();
-                else startFirst();
+        // --- INPUT HANDLING (FIXED) ---
+        function handleInput(type) {
+            if (!isRunning) {
+                if (frame === 0 || document.getElementById('game-over').style.display !== 'none') {
+                    if (document.getElementById('game-over').style.display !== 'none') resetGame();
+                    else startFirst();
+                }
+                return;
             }
 
-            if (isRunning && (e.code === 'Space' || e.code === 'ArrowUp')) jump();
-
-            if (isRunning && e.code === 'ArrowDown') {
+            if (type === 'jump') jump();
+            if (type === 'slide_down') {
                 player.state = 'slide';
-                if (!player.isGrounded) player.vy += 20; // Fast drop
+                if (!player.isGrounded) player.vy += 20;
+            }
+            if (type === 'slide_up') {
+                if (player.state === 'slide') player.state = 'run';
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            // Log code for debugging (invisible to user but logic follows)
+            const code = e.code;
+
+            // JUMP: Space, ArrowUp, W
+            if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW' || e.key === ' ') {
+                e.preventDefault();
+                handleInput('jump');
+            }
+
+            // SLIDE: ArrowDown, S
+            if (code === 'ArrowDown' || code === 'KeyS') {
+                e.preventDefault();
+                handleInput('slide_down');
             }
         });
 
         window.addEventListener('keyup', e => {
-            if (e.code === 'ArrowDown' && player.state === 'slide') {
-                player.state = 'run';
-                if (player.isGrounded) player.y = player.groundY; // Pop up
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') { // Fixed: use e.code here
+                handleInput('slide_up');
             }
         });
 
+        // Touch / Mouse Support
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent scroll
+            handleInput('jump');
+        }, { passive: false });
+
+        document.addEventListener('mousedown', (e) => {
+            handleInput('jump');
+        });
+
+        // Start Helper
         function startFirst() {
             if (frame === 0) resetGame();
         }
