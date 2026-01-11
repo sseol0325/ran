@@ -839,6 +839,14 @@
 
         let currentNickname = "Anonymous";
 
+        // Pre-fill nickname from LocalStorage
+        window.addEventListener('load', () => {
+            const savedName = localStorage.getItem('ranrun_nickname');
+            if (savedName) {
+                document.getElementById('nickname').value = savedName;
+            }
+        });
+
         // --- START SCREEN LOGIC ---
         function startGame() {
             const nickInput = document.getElementById('nickname');
@@ -850,7 +858,36 @@
                 return;
             }
 
+            // Check correctness/duplication
+            const savedName = localStorage.getItem('ranrun_nickname');
+
+            // If name is same as saved, skip check (it's me)
+            if (name === savedName) {
+                proceedGame(name);
+                return;
+            }
+
+            // Check DB for duplicate
+            if (db) {
+                db.collection('ranrun_scores').doc(name).get().then(doc => {
+                    if (doc.exists) {
+                        alert("This nickname is already taken via Ranking! Please choose another.");
+                    } else {
+                        proceedGame(name);
+                    }
+                }).catch(err => {
+                    console.error("Available check error", err);
+                    // Fallback: allow play if offline, but might fail save
+                    proceedGame(name);
+                });
+            } else {
+                proceedGame(name);
+            }
+        }
+
+        function proceedGame(name) {
             currentNickname = name;
+            localStorage.setItem('ranrun_nickname', name); // Cookie/Local Save
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-over').style.display = 'none';
@@ -864,20 +901,34 @@
             document.getElementById('final-score').innerText = finalScore;
             document.getElementById('game-over').style.display = 'flex';
 
-            // Upload Score & Fetch Ranking
+            // Upload Score (Max Logic) & Fetch Ranking
             if (db) {
-                const scoresRef = db.collection('ranrun_scores');
+                const userDoc = db.collection('ranrun_scores').doc(currentNickname);
 
-                // 1. Upload
-                scoresRef.add({
-                    name: currentNickname,
-                    score: finalScore,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                userDoc.get().then(doc => {
+                    let needsUpdate = true;
+                    if (doc.exists) {
+                        const oldScore = doc.data().score;
+                        if (finalScore <= oldScore) {
+                            needsUpdate = false;
+                            console.log("Not a new high score. Keeping:", oldScore);
+                        }
+                    }
+
+                    if (needsUpdate) {
+                        return userDoc.set({
+                            name: currentNickname,
+                            score: finalScore,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        return Promise.resolve(); // No update needed
+                    }
                 }).then(() => {
-                    console.log("Score uploaded!");
+                    console.log("Score process complete.");
                     loadRankings();
                 }).catch(err => {
-                    console.error("Error uploading score:", err);
+                    console.error("Score Error:", err);
                     document.getElementById('leaderboard').innerHTML = "Error saving score.";
                 });
             }
@@ -897,7 +948,8 @@
                     let rank = 1;
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        const isMe = data.name === currentNickname && data.score === Math.floor(score);
+                        // Highlight Me
+                        const isMe = data.name === currentNickname;
                         html += `
                             <div class="rank-item" style="${isMe ? 'color:#ffff00; font-weight:bold;' : 'color:#eee;'}">
                                 <span>${rank}. ${data.name}</span>
