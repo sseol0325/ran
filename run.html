@@ -555,12 +555,13 @@
         }
 
         function drawItem(i) {
-            ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 12, 0, Math.PI * 2); ctx.fill();
-        } else if (i.type === 'jelly') {
-            ctx.fillStyle = '#FF69B4'; ctx.fillRect(i.x + 5, i.y + 5, 20, 20);
-        } else if (i.type === 'potion') {
-            ctx.fillStyle = '#F00'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 10, 0, Math.PI * 2); ctx.fill();
-        }
+            if (i.type === 'coin') {
+                ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 12, 0, Math.PI * 2); ctx.fill();
+            } else if (i.type === 'jelly') {
+                ctx.fillStyle = '#FF69B4'; ctx.fillRect(i.x + 5, i.y + 5, 20, 20);
+            } else if (i.type === 'potion') {
+                ctx.fillStyle = '#F00'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 10, 0, Math.PI * 2); ctx.fill();
+            }
         }
 
         function createDust(x, y) {
