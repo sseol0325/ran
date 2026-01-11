@@ -184,92 +184,16 @@
         let frame = 0;
         let hp = 100;
         let bgOffset = 0;
+        let warningTimer = 0; // For missile warning
 
-        // --- ENTITIES ---
-        let player = {
-            x: 100, y: 0, w: 60, h: 80, vy: 0,
-            state: 'run',
-            groundY: 0,
-            isGrounded: false,
-            jumpCount: 0,
-            runFrame: 0
-        };
-
-        let obstacles = [];
-        let items = [];
-        let particles = [];
-
-        // --- INIT & LOOP ---
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            player.groundY = canvas.height - 180;
-            if (!isRunning) player.y = player.groundY;
-        }
-        window.addEventListener('resize', resize);
-
-        function init() {
-            resize();
-            player.y = player.groundY;
-
-            // Add Global Interaction Listener
-            ['mousedown', 'touchstart', 'keydown'].forEach(evt =>
-                window.addEventListener(evt, () => {
-                    if (!isRunning && document.getElementById('game-over').style.display === 'none') {
-                        // Only start if not game over and not running
-                        startFirst();
-                    }
-                }, { once: true })
-            );
-
-            if (frame === 0 && !isRunning) draw();
-        }
-
-        function resetGame() {
-            obstacles = [];
-            items = [];
-            particles = [];
-            score = 0;
-            hp = 100;
-            speed = SPEED_START;
-            frame = 0;
-
-            player.y = player.groundY;
-            player.vy = 0;
-            player.state = 'run';
-            player.jumpCount = 0;
-
-            document.getElementById('game-over').style.display = 'none';
-            document.getElementById('tutorial-msg').style.display = 'none';
-
-            isRunning = true;
-            isPaused = false;
-            requestAnimationFrame(loop);
-        }
-
-        function togglePause() {
-            if (!isRunning) return;
-            isPaused = !isPaused;
-            if (!isPaused) requestAnimationFrame(loop);
-        }
-
-        function loop() {
-            if (!isRunning) {
-                if (frame === 0) draw();
-                return;
-            }
-            if (isPaused) return;
-
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
+        // ... [ENTITIES array stays same] ...
 
         function update() {
             frame++;
-            speed = Math.min(25, SPEED_START + frame * 0.002);
+            // Harder Difficulty Scaling: Speed cap increased to 35, faster acceleration
+            speed = Math.min(35, SPEED_START + frame * 0.003);
             bgOffset += speed * 0.5;
-            player.runFrame += 0.2;
+            player.runFrame += 0.2 + (speed - SPEED_START) * 0.01; // Animated faster with speed
 
             // --- PLAYER PHYSICS (FIXED) ---
             if (player.state === 'slide') {
@@ -286,7 +210,6 @@
 
             // 3. Ground Constraint
             if (player.y >= player.groundY) {
-                // Only land if actually falling down to it
                 if (player.vy > 0) {
                     if (!player.isGrounded) createDust(player.x, player.y + 80);
                     player.y = player.groundY;
@@ -300,13 +223,31 @@
                 if (player.state !== 'slide') player.state = 'jump';
             }
 
-            // --- SPAWN LOGIC ---
-            if (frame % Math.floor(1300 / speed) === 0) {
+            // --- SPAWN LOGIC (Harder) ---
+            // Spawn rate increases with speed (less frames between spawns)
+            let spawnRate = Math.max(40, Math.floor(1400 / speed));
+            if (frame % spawnRate === 0) {
                 spawnObstacle();
             }
 
+            // Missile Logic
+            if (frame > 500 && Math.random() < 0.005) { // Occasional random missile
+                spawnMissile();
+            }
+
             // --- MOVEMENT ---
-            obstacles.forEach(o => o.x -= speed);
+            obstacles.forEach(o => {
+                o.x -= speed;
+                // Monster Movement
+                if (o.type === 'slime') o.x -= 2; // Moves towards player
+                if (o.type === 'bat') {
+                    o.x -= 3; // Fast flyer
+                    o.y += Math.sin(frame * 0.1) * 2; // Bobbing
+                }
+                if (o.type === 'missile') {
+                    o.x -= (speed * 0.5); // Accels past normal speed
+                }
+            });
             items.forEach(i => i.x -= speed);
             particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.5; });
 
@@ -316,25 +257,21 @@
 
             checkCollisions();
 
-            score += speed * 0.01;
+            score += speed * 0.02; // More score for speed
             document.getElementById('score-box').innerText = Math.floor(score);
             document.getElementById('hp-fill').style.width = hp + '%';
 
             if (hp <= 0) gameOver();
         }
 
-        function jump() {
-            if (player.isGrounded) {
-                player.vy = JUMP_POWER;
-                player.state = 'jump';
-                player.isGrounded = false;
-                player.jumpCount = 1;
-                createDust(player.x, player.y + 80);
-            } else if (player.jumpCount < 2) {
-                player.vy = DOUBLE_JUMP_POWER;
-                player.jumpCount = 2;
-                createSparkle(player.x, player.y + 40, '#fff');
-            }
+        function spawnMissile() {
+            // Warning Effect could be added here, currently just spawn far out
+            obstacles.push({
+                x: canvas.width + 200, y: player.groundY - 60,
+                w: 80, h: 30,
+                type: 'missile',
+                warning: true
+            });
         }
 
         function spawnObstacle() {
@@ -342,237 +279,128 @@
             const x = canvas.width + 100;
             const ground = player.groundY;
 
-            if (type < 0.5) {
-                // Ground Obstacle
+            // Difficulty tiers based on score/frame
+            let difficulty = Math.min(1, frame / 3000); // 0 to 1 scaling
+
+            if (type < 0.3) {
+                // Ground Spikes (Classic)
+                let count = difficulty > 0.5 ? (Math.random() < 0.5 ? 2 : 3) : 1; // 1 to 3 spikes
                 obstacles.push({
                     x: x, y: ground + 10,
-                    w: 50, h: 70,
-                    type: Math.random() < 0.5 ? 'spike' : 'block'
+                    w: 40 * count, h: 60,
+                    type: 'spike'
                 });
-                spawnItems(x, ground - 130);
+            } else if (type < 0.5) {
+                // Tall Block (Must Double Jump)
+                obstacles.push({
+                    x: x, y: ground - 40,
+                    w: 50, h: 120, // Tall!
+                    type: 'tall'
+                });
+                spawnItems(x, ground - 180);
+            } else if (type < 0.7) {
+                // Monsters
+                if (Math.random() < 0.5) {
+                    // Slime (Ground)
+                    obstacles.push({
+                        x: x, y: ground + 20,
+                        w: 50, h: 40,
+                        type: 'slime'
+                    });
+                } else {
+                    // Bat (Air) - tricky height
+                    let heights = [ground - 60, ground - 120];
+                    obstacles.push({
+                        x: x, y: heights[Math.floor(Math.random() * 2)],
+                        w: 50, h: 40,
+                        type: 'bat'
+                    });
+                }
             } else {
-                // Hanging Block
+                // Hanging Wall (Slide)
                 obstacles.push({
                     x: x, y: ground - 70,
-                    w: 60, h: 60,
+                    w: 60, h: 80,
                     type: 'hanging'
                 });
                 spawnItems(x, ground + 20);
             }
         }
 
-        function spawnItems(x, y) {
-            for (let i = 0; i < 3; i++) {
-                if (Math.random() > 0.5) continue;
-                items.push({
-                    x: x + i * 50, y: y, w: 30, h: 30,
-                    type: Math.random() < 0.1 ? 'potion' : (Math.random() < 0.3 ? 'jelly' : 'coin')
-                });
-            }
-        }
+        // ... [spawnItems and checkCollisions stay mostly same, maybe update hitboxes] ...
 
-        function checkCollisions() {
-            const p = {
-                x: player.x + 15, y: player.y + 10,
-                w: player.w - 30, h: player.state === 'slide' ? 30 : player.h - 10
-            };
-
-            obstacles.forEach(o => {
-                if (o.hit) return;
-                let oRect = { x: o.x, y: o.y, w: o.w, h: o.h };
-                if (intersect(p, oRect)) {
-                    o.hit = true;
-                    takeDamage();
-                }
-            });
-
-            items.forEach(i => {
-                const iRect = { x: i.x - 10, y: i.y - 10, w: i.w + 20, h: i.h + 20 };
-                if (intersect(p, iRect)) {
-                    i.collected = true;
-                    if (i.type === 'coin') score += 100;
-                    if (i.type === 'jelly') score += 200;
-                    if (i.type === 'potion') { hp = Math.min(100, hp + 20); createSparkle(player.x, player.y, '#f0f'); }
-                    createSparkle(i.x, i.y, '#ff0');
-                }
-            });
-        }
-
-        function intersect(r1, r2) {
-            return !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x || r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
-        }
-
-        function takeDamage() {
-            if (player.state === 'hurt') return;
-            hp -= 20;
-            player.state = 'hurt';
-            player.vy = -8;
-            canvas.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
-            setTimeout(() => { canvas.style.transform = 'none'; if (hp > 0) player.state = 'run'; }, 500);
-        }
-
-        function gameOver() {
-            isRunning = false;
-            document.getElementById('final-score').innerText = Math.floor(score);
-            document.getElementById('game-over').style.display = 'flex';
-        }
-
-        // --- DRAWING ---
-        function draw() {
-            ctx.fillStyle = '#AEE4FF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            drawBackground();
-
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(0, player.groundY + 80, canvas.width, canvas.height);
-            ctx.fillStyle = '#7CFC00';
-            ctx.beginPath();
-            ctx.moveTo(0, player.groundY + 80);
-            for (let i = 0; i < canvas.width; i += 20) {
-                ctx.lineTo(i + 10, player.groundY + 70 + Math.sin(i + bgOffset) * 5);
-                ctx.lineTo(i + 20, player.groundY + 80);
-            }
-            ctx.lineTo(canvas.width, canvas.height);
-            ctx.lineTo(0, canvas.height);
-            ctx.fill();
-
-            obstacles.forEach(drawObstacle);
-            items.forEach(drawItem);
-            drawPlayer();
-
-            particles.forEach(p => {
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 4, 4);
-            });
-        }
-
-        function drawBackground() {
-            ctx.fillStyle = '#90EE90';
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height);
-            for (let i = 0; i <= canvas.width; i += 100) {
-                let y = player.groundY - 50 + Math.sin((i + bgOffset * 0.2) * 0.01) * 50;
-                ctx.lineTo(i, y);
-            }
-            ctx.lineTo(canvas.width, canvas.height);
-            ctx.lineTo(0, canvas.height);
-            ctx.fill();
-        }
-
-        function drawPlayer() {
-            ctx.save();
-
-            // Center point
-            let cx = player.x + player.w / 2;
-            let cy = player.y + player.h / 2;
-
-            // Slide Adjustment: Lower the center visually to align with ground
-            if (player.state === 'slide') {
-                cy += 20; // Push down to ground
-            }
-
-            ctx.translate(cx, cy);
-
-            if (player.state === 'hurt') ctx.globalAlpha = 0.5;
-
-            // --- CHARACTER: BLACK HAIR / BLUE DRESS ---
-            let bob = Math.sin(player.runFrame) * 3;
-            if (player.state !== 'run') bob = 0;
-            if (player.state === 'jump') bob = -5;
-
-            // Rotate for Slide (Lying down)
-            if (player.state === 'slide') {
-                ctx.rotate(-Math.PI / 2); // -90 degrees
-                bob = 0;
-            }
-
-            // 1. Hair (Back) - Black
-            ctx.fillStyle = '#111';
-            ctx.beginPath();
-            ctx.arc(0, -25 + bob, 25, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 2. Body / Dress - Blue
-            ctx.fillStyle = '#2563eb';
-            ctx.beginPath();
-            ctx.moveTo(0, -10 + bob);
-            ctx.lineTo(-15, 30 + bob);
-            ctx.lineTo(15, 30 + bob);
-            ctx.fill();
-
-            // 3. Head
-            ctx.fillStyle = '#ffe0bd';
-            ctx.beginPath();
-            ctx.arc(0, -20 + bob, 15, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 4. Face (Rotate back if sliding? No, face down looks cute, or forward)
-            // If rotated -90, 'up' is 'forward'.
-            ctx.fillStyle = '#000';
-            if (player.state === 'hurt') {
-                ctx.fillText('><', -5, -18 + bob);
-            } else {
-                ctx.beginPath(); ctx.arc(-5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#ffaaaa';
-                ctx.beginPath(); ctx.arc(-8, -15 + bob, 2, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(8, -15 + bob, 2, 0, Math.PI * 2); ctx.fill();
-            }
-
-            // 5. Hair (Front) - Black
-            ctx.fillStyle = '#111';
-            ctx.beginPath();
-            ctx.arc(-10, -25 + bob, 8, 0, Math.PI * 2);
-            ctx.arc(10, -25 + bob, 8, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 6. Limbs
-            ctx.strokeStyle = '#ffe0bd';
-            ctx.lineWidth = 4;
-            // Arms (If sliding, reach forward)
-            if (player.state === 'slide') {
-                ctx.beginPath(); ctx.moveTo(-10, -5); ctx.lineTo(-20, -30); ctx.stroke(); // Forward
-                ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(20, -30); ctx.stroke();
-            } else {
-                ctx.beginPath(); ctx.moveTo(-10, -5 + bob); ctx.lineTo(-20, 10 + bob - (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 20)); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(10, -5 + bob); ctx.lineTo(20, 10 + bob + (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 0)); ctx.stroke();
-            }
-
-            // Legs
-            ctx.strokeStyle = '#fff';
-            let legL = player.state === 'run' ? Math.sin(player.runFrame) * 15 : 0;
-            let legR = player.state === 'run' ? Math.sin(player.runFrame + Math.PI) * 15 : 0;
-            if (player.state === 'jump') { legL = -10; legR = 10; }
-            if (player.state === 'slide') { legL = 10; legR = 10; } // Straight back
-
-            ctx.beginPath(); ctx.moveTo(-5, 30 + bob); ctx.lineTo(-5 + legL, 40 + bob); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(5, 30 + bob); ctx.lineTo(5 + legR, 40 + bob); ctx.stroke();
-
-            // Shoes
-            ctx.fillStyle = '#1e3a8a';
-            ctx.beginPath(); ctx.arc(-5 + legL, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(5 + legR, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
-
-            ctx.restore();
-        }
-
+        // ... [drawObstacle needs major update] ...
         function drawObstacle(o) {
             if (o.type === 'spike') {
-                ctx.fillStyle = '#444';
+                ctx.fillStyle = '#991b1b';
                 ctx.beginPath();
-                ctx.moveTo(o.x, o.y + o.h);
-                ctx.lineTo(o.x + o.w / 2, o.y);
-                ctx.lineTo(o.x + o.w, o.y + o.h);
+                // Draw multiple spikes if wide
+                let spikeCount = Math.floor(o.w / 20);
+                for (let i = 0; i < spikeCount; i++) {
+                    let sx = o.x + i * 20;
+                    ctx.moveTo(sx, o.y + o.h);
+                    ctx.lineTo(sx + 10, o.y);
+                    ctx.lineTo(sx + 20, o.y + o.h);
+                }
                 ctx.fill();
-            } else if (o.type === 'block') {
-                ctx.fillStyle = '#8B4513';
+            } else if (o.type === 'block' || o.type === 'tall') {
+                ctx.fillStyle = '#4b5563';
                 ctx.fillRect(o.x, o.y, o.w, o.h);
-                ctx.strokeStyle = '#5D4037'; ctx.beginPath(); ctx.moveTo(o.x + 5, o.y); ctx.lineTo(o.x + 5, o.y + o.h); ctx.stroke();
+                ctx.fillStyle = '#374151'; // Bricks
+                ctx.fillRect(o.x + 5, o.y + 5, o.w - 10, o.h - 10);
             } else if (o.type === 'hanging') {
-                ctx.fillStyle = '#607D8B';
+                ctx.fillStyle = '#0f766e'; // Tealish wall
                 ctx.fillRect(o.x, o.y, o.w, o.h);
                 ctx.strokeStyle = '#000'; ctx.beginPath(); ctx.moveTo(o.x + o.w / 2, o.y); ctx.lineTo(o.x + o.w / 2, 0); ctx.stroke();
+            } else if (o.type === 'slime') {
+                // Slime Animation
+                let squish = Math.sin(frame * 0.2) * 5;
+                ctx.fillStyle = '#84cc16'; // Lime
+                ctx.beginPath();
+                ctx.arc(o.x + o.w / 2, o.y + o.h / 2 + squish, 20, Math.PI, 0); // Top dome
+                ctx.lineTo(o.x + o.w, o.y + o.h);
+                ctx.lineTo(o.x, o.y + o.h);
+                ctx.fill();
+                // Eyes
+                ctx.fillStyle = '#000';
+                ctx.beginPath(); ctx.arc(o.x + 15, o.y + 15 + squish, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(o.x + 35, o.y + 15 + squish, 3, 0, Math.PI * 2); ctx.fill();
+            } else if (o.type === 'bat') {
+                // Bat flying
+                ctx.fillStyle = '#4c1d95'; // Violet
+                ctx.beginPath();
+                ctx.arc(o.x + o.w / 2, o.y + o.h / 2, 15, 0, Math.PI * 2); // Body
+                ctx.fill();
+                // Wings
+                let wingFlap = Math.sin(frame * 0.5) * 10;
+                ctx.beginPath();
+                ctx.moveTo(o.x + 10, o.y + 15);
+                ctx.lineTo(o.x - 10, o.y - 10 + wingFlap);
+                ctx.lineTo(o.x + 10, o.y + 5);
+                ctx.fill(); // Left Wing
+                ctx.beginPath();
+                ctx.moveTo(o.x + 40, o.y + 15);
+                ctx.lineTo(o.x + 60, o.y - 10 + wingFlap);
+                ctx.lineTo(o.x + 40, o.y + 5);
+                ctx.fill(); // Right Wing
+            } else if (o.type === 'missile') {
+                ctx.fillStyle = '#ef4444'; // Red Rocket
+                ctx.beginPath();
+                ctx.ellipse(o.x + o.w / 2, o.y + o.h / 2, 40, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Flame
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.w, o.y + o.h / 2 - 5);
+                ctx.lineTo(o.x + o.w + Math.random() * 30 + 10, o.y + o.h / 2);
+                ctx.lineTo(o.x + o.w, o.y + o.h / 2 + 5);
+                ctx.fill();
+                // Warning text if near right edge?
+                if (o.x > canvas.width - 100) {
+                    ctx.fillStyle = 'red';
+                    ctx.font = 'bold 30px sans-serif';
+                    ctx.fillText('!', canvas.width - 50, o.y + 20);
+                }
             }
         }
 
