@@ -273,49 +273,6 @@
         let warningTimer = 0;
         let loopId = null; // Fix for double-loop bug
 
-        // ... [ENTITIES array stays same] ...
-
-        // ... [INIT & RESIZE defined below] ...
-
-        function resetGame() {
-            if (loopId) cancelAnimationFrame(loopId); // Prevent double loops
-
-            obstacles = [];
-            items = [];
-            particles = [];
-            score = 0;
-            hp = 100;
-            speed = SPEED_START;
-            frame = 0;
-
-            player.y = player.groundY;
-            player.vy = 0;
-            player.state = 'run';
-            player.jumpCount = 0;
-
-            document.getElementById('game-over').style.display = 'none';
-            // document.getElementById('tutorial-msg').style.display = 'none'; // Element removed
-
-            isRunning = true;
-            isPaused = false;
-            loop(); // Start loop
-        }
-
-        function togglePause() {
-            if (!isRunning) return;
-            isPaused = !isPaused;
-            if (!isPaused) loop();
-        }
-
-        function loop() {
-            if (!isRunning) return;
-            if (isPaused) return;
-
-            update();
-            draw();
-            loopId = requestAnimationFrame(loop);
-        }
-
         // --- ENTITIES ---
         let player = {
             x: 100, y: 0, w: 60, h: 80, vy: 0,
@@ -861,18 +818,10 @@
             loadRankings(); // Load rankings on start
         });
 
-        // ...
-
         // --- RANKING CLEANUP TOOL ---
         async function cleanDuplicates() {
             if (!db) return alert("데이터베이스 연결 실패");
-            // const password = prompt("관리자 비밀번호를 입력하세요 (이 기능을 실행하면 중복 기록이 삭제됩니다)");
-            // if (password !== "1234") return alert("비밀번호가 틀렸습니다.");
 
-            // Password removed per user request (or handle it gracefully)
-            // But wait, user earlier said "password is pre-filled, remove it".
-            // Then later user said "remove pre-filled 1234".
-            // I will use prompt without default value.
             const password = prompt("관리자 비밀번호를 입력하세요");
             if (password !== "1234") return alert("비밀번호가 틀렸습니다.");
 
@@ -903,11 +852,11 @@
 
                 // 2. Re-save Best Scores
                 for (const name in bestScores) {
-                    const data = bestScores[name];
+                    const best = bestScores[name];
                     const ref = db.collection('ranrun_scores').doc(name);
                     batch.set(ref, {
-                        name: data.name,
-                        score: data.score,
+                        name: best.name,
+                        score: best.score,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
@@ -926,6 +875,7 @@
         function loadRankings() {
             const targets = [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')];
 
+            // 1. Check DB Connection
             if (!db) {
                 targets.forEach(el => {
                     if (el) el.innerHTML = "<div style='text-align:center; color:#ff6666; font-size:14px;'>데이터베이스 연결 실패<br>(인터넷 확인 필요)</div>";
@@ -933,18 +883,33 @@
                 return;
             }
 
-            // Update BOTH leaderboards
-
-
+            // 2. Set Loading State
             targets.forEach(el => {
                 if (el) el.innerHTML = "<div style='text-align:center;'>순위 로딩 중...</div>";
             });
 
+            // 3. Timeout Fallback (5 seconds)
+            const timeoutId = setTimeout(() => {
+                targets.forEach(el => {
+                    if (el && el.innerHTML.includes("로딩 중")) {
+                        el.innerHTML = "<div style='text-align:center; color:#eda;'>로딩 시간 초과<br>(새로고침 권장)</div>";
+                    }
+                });
+            }, 5000);
+
+            // 4. Fetch Data
             db.collection('ranrun_scores')
                 .orderBy('score', 'desc')
                 .limit(10)
                 .get()
                 .then(snapshot => {
+                    clearTimeout(timeoutId); // Success! Clear timeout
+
+                    if (snapshot.empty) {
+                        targets.forEach(el => { if (el) el.innerHTML = "<div style='text-align:center;'>기록 없음</div>"; });
+                        return;
+                    }
+
                     let html = "";
                     let rank = 1;
                     snapshot.forEach(doc => {
@@ -976,9 +941,10 @@
                     });
                 })
                 .catch(err => {
+                    clearTimeout(timeoutId);
                     console.error("Error fetching rankings:", err);
                     targets.forEach(el => {
-                        if (el) el.innerHTML = "순위 로드 실패";
+                        if (el) el.innerHTML = "순위 로드 실패<br>(" + err.code + ")";
                     });
                 });
         }
@@ -1068,105 +1034,6 @@
                     document.getElementById('leaderboard').innerHTML = "점수 저장 실패";
                 });
             }
-        }
-
-        // --- RANKING CLEANUP TOOL ---
-        async function cleanDuplicates() {
-            if (!db) return;
-            const password = prompt("관리자 비밀번호를 입력하세요 (이 기능을 실행하면 중복 기록이 삭제됩니다)", "1234");
-            if (password !== "1234") return alert("비밀번호가 틀렸습니다.");
-
-            if (!confirm("정말로 랭킹 중복을 정리하시겠습니까?\n모든 플레이어의 최고 점수 1개만 남기고 나머지는 삭제됩니다.")) return;
-
-            const leaderboard = document.getElementById('leaderboard');
-            leaderboard.innerHTML = "<div style='text-align:center;'>정리 중...</div>";
-
-            try {
-                const snapshot = await db.collection('ranrun_scores').get();
-                const bestScores = {};
-                const batch = db.batch();
-
-                // 1. Find Best Scores
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const name = data.name;
-                    if (!name) return; // Skip invalid
-
-                    if (!bestScores[name] || data.score > bestScores[name].score) {
-                        bestScores[name] = {
-                            name: name,
-                            score: data.score
-                        };
-                    }
-                    // Delete EVERY document we find (we will re-add the best ones)
-                    // This ensures random IDs are gone and we normalize to doc(name)
-                    batch.delete(doc.ref);
-                });
-
-                // 2. Re-save Best Scores
-                for (const name in bestScores) {
-                    const data = bestScores[name];
-                    const ref = db.collection('ranrun_scores').doc(name);
-                    batch.set(ref, {
-                        name: data.name,
-                        score: data.score,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-
-                await batch.commit();
-                alert("정리 완료! 중복된 랭킹이 제거되었습니다.");
-                loadRankings();
-
-            } catch (err) {
-                console.error(err);
-                alert("오류 발생: " + err.message);
-                loadRankings();
-            }
-        }
-
-        function loadRankings() {
-            if (!db) return;
-            const leaderboard = document.getElementById('leaderboard');
-            leaderboard.innerHTML = "<div style='text-align:center;'>순위 로딩 중...</div>";
-
-            db.collection('ranrun_scores')
-                .orderBy('score', 'desc')
-                .limit(10)
-                .get()
-                .then(snapshot => {
-                    let html = "";
-                    let rank = 1;
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const isMe = data.name === currentNickname;
-                        html += `
-                            <div class="rank-item" style="${isMe ? 'color:#ffff00; font-weight:bold;' : 'color:#eee;'}">
-                                <span>${rank}. ${data.name}</span>
-                                <span>${data.score}</span>
-                            </div>
-                        `;
-                        rank++;
-                    });
-
-                    // Admin Button (Bottom of list)
-                    html += `
-                        <div style="text-align:center; margin-top:10px;">
-                            <button onclick="cleanDuplicates()" style="
-                                background: none; border: none; padding: 0;
-                                font-size: 12px; color: #aaa; cursor: pointer; text-decoration: underline;
-                            ">
-                                [관리자: 랭킹 중복 정리]
-                            </button>
-                        </div>
-                    `;
-
-                    leaderboard.innerHTML = html;
-                })
-                .catch(err => {
-                    console.error("Error fetching rankings:", err);
-                    leaderboard.innerHTML = "순위 로드 실패";
-                });
         }
 
         // --- GLOBAL INPUT HANDLING (FAILSAFE) ---
