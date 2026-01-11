@@ -699,160 +699,133 @@
                 // Slime Animation
                 let squish = Math.sin(frame * 0.2) * 5;
                 ctx.fillStyle = '#84cc16'; // Lime
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #87CEEB;
-            font-family: 'Pretendard', sans-serif;
-            user-select: none;
-            -webkit-user-select: none; /* Safari */
-            touch-action: none; /* GLOBAL DISABLE SCROLL */
-        }
-        
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-            touch-action: none; /* CRITICAL: Allows raw touch input */
-        }
-
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
-            box-sizing: border-box;
-            touch-action: none; /* CRITICAL: Allows raw touch input */
-        }
-
-        /* ... existing styles ... */
-
-        /* Buttons need pointer-events: auto to be clickable */
-        button {
-            pointer-events: auto;
-            /* ... existing button styles ... */
-            padding: 15px 40px;
-            font-size: 24px;
-            font-weight: bold;
-            border-radius: 15px;
-            border: none;
-            cursor: pointer;
-            background: #ff69b4;
-            color: #fff;
-            box-shadow: 0 4px 0 #db2777;
-            transition: transform 0.1s;
-            margin-top: 20px;
-        }
-
-        /* ... */
-    </style>
-    <!-- ... -->
-    
-    <!--Add safe click handlers to buttons to stop propagation-- >
-    <div id="ui-layer">
-        <div style="display:flex; gap:20px; align-items:center;">
-            <div id="hp-bar">
-                <div id="hp-fill"></div>
-            </div>
-            <div id="score-box">0</div>
-        </div>
-        <!-- Stop propagation on pointerdown so game doesn't jump when pausing -->
-        <button id="pause-btn" 
-            onpointerdown="event.stopPropagation()" 
-            onclick="togglePause()">II</button>
-    </div>
-
-    <div id="tutorial-msg" class="tutorial">
-        PC: SPACE=JUMP | DOWN=SLIDE<br>
-        MOBILE: TOUCH LEFT=JUMP | TOUCH RIGHT=SLIDE
-    </div>
-
-    <div id="game-over">
-        <h1 style="font-size:60px; margin-bottom:10px;">GAME OVER</h1>
-        <p style="font-size:24px; margin-bottom:30px;">Score: <span id="final-score">0</span></p>
-        <!-- Stop propagation on game over buttons too -->
-        <button onpointerdown="event.stopPropagation()" onclick="resetGame()">RETRY (SPACE)</button>
-        <button onpointerdown="event.stopPropagation()" onclick="location.href='games.html'"
-            style="background:#555; color:#fff; box-shadow:0 4px 0 #333; margin-top:10px;">EXIT</button>
-    </div>
-
-    <!-- ... -->
-
-                    <script>
-        // ... (lines 170-800) ...
-
-                        // --- INPUT HANDLING (FIXED) ---
-                        function handleInput(type) {
-            if (!isRunning) {
-                // Only allow start on initial load (frame 0).
-                // Game Over restart is handled by button or specific key check.
-                if (frame === 0 && document.getElementById('game-over').style.display === 'none') {
-                            startFirst();
+                ctx.beginPath();
+                ctx.arc(o.x + o.w / 2, o.y + o.h / 2 + squish, 20, Math.PI, 0); // Top dome
+                ctx.lineTo(o.x + o.w, o.y + o.h);
+                ctx.lineTo(o.x, o.y + o.h);
+                ctx.fill();
+                // Eyes
+                ctx.fillStyle = '#000';
+                ctx.beginPath(); ctx.arc(o.x + 15, o.y + 15 + squish, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(o.x + 35, o.y + 15 + squish, 3, 0, Math.PI * 2); ctx.fill();
+            } else if (o.type === 'bat') {
+                // Bat flying
+                ctx.fillStyle = '#4c1d95'; // Violet
+                ctx.beginPath();
+                ctx.arc(o.x + o.w / 2, o.y + o.h / 2, 15, 0, Math.PI * 2); // Body
+                ctx.fill();
+                // Wings
+                let wingFlap = Math.sin(frame * 0.5) * 10;
+                ctx.beginPath();
+                ctx.moveTo(o.x + 10, o.y + 15);
+                ctx.lineTo(o.x - 10, o.y - 10 + wingFlap);
+                ctx.lineTo(o.x + 10, o.y + 5);
+                ctx.fill(); // Left Wing
+                ctx.beginPath();
+                ctx.moveTo(o.x + 40, o.y + 15);
+                ctx.lineTo(o.x + 60, o.y - 10 + wingFlap);
+                ctx.lineTo(o.x + 40, o.y + 5);
+                ctx.fill(); // Right Wing
+            } else if (o.type === 'missile') {
+                ctx.fillStyle = '#ef4444'; // Red Rocket
+                ctx.beginPath();
+                ctx.ellipse(o.x + o.w / 2, o.y + o.h / 2, 40, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Flame
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.moveTo(o.x + o.w, o.y + o.h / 2 - 5);
+                ctx.lineTo(o.x + o.w + Math.random() * 30 + 10, o.y + o.h / 2);
+                ctx.lineTo(o.x + o.w, o.y + o.h / 2 + 5);
+                ctx.fill();
+                // Warning text if near right edge
+                if (o.x > canvas.width - 100) {
+                    ctx.fillStyle = 'red';
+                    ctx.font = 'bold 30px sans-serif';
+                    ctx.fillText('!', canvas.width - 50, o.y + 20);
                 }
-                        return;
+            }
+        }
+
+        function drawItem(i) {
+            if (i.type === 'coin') {
+                ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 12, 0, Math.PI * 2); ctx.fill();
+            } else if (i.type === 'jelly') {
+                ctx.fillStyle = '#FF69B4'; ctx.fillRect(i.x + 5, i.y + 5, 20, 20);
+            } else if (i.type === 'potion') {
+                ctx.fillStyle = '#F00'; ctx.beginPath(); ctx.arc(i.x + 15, i.y + 15, 10, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        function createDust(x, y) {
+            for (let i = 0; i < 3; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 3, vy: -1, life: 10, color: '#fff' });
+        }
+        function createSparkle(x, y, color) {
+            for (let i = 0; i < 5; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 15, color: color });
+        }
+
+        // --- MODERN INPUT HANDLING (POINTER EVENTS) ---
+        // Replacing all touch/mouse listeners with Pointer Events users
+
+        function handleInput(type) {
+            if (!isRunning) {
+                if (frame === 0 && document.getElementById('game-over').style.display === 'none') {
+                    startFirst();
+                }
+                return;
             }
 
-                        if (type === 'jump') jump();
-                        if (type === 'slide_down') {
-                            player.state = 'slide';
-                        if (!player.isGrounded) player.vy += 20;
+            if (type === 'jump') jump();
+            if (type === 'slide_down') {
+                player.state = 'slide';
+                if (!player.isGrounded) player.vy += 20;
             }
-                        if (type === 'slide_up') {
+            if (type === 'slide_up') {
                 if (player.state === 'slide') player.state = 'run';
             }
         }
 
-                        // --- MODERN INPUT HANDLING (POINTER EVENTS) ---
-                        // Replacing all touch/mouse listeners with Pointer Events users
-
-                        // Map to track active pointers (multitouch support)
-                        const activePointers = new Map();
+        // Map to track active pointers (multitouch support)
+        const activePointers = new Map();
 
         window.addEventListener('pointerdown', (e) => {
-                            // If we are touching a button, the HTML handler stops propagation.
-                            // So if we reach here, it's a game input.
+            // If we are touching a button, the HTML handler stops propagation.
+            // So if we reach here, it's a game input.
 
-                            // Store pointer
-                            activePointers.set(e.pointerId, e.clientX);
+            // Store pointer
+            activePointers.set(e.pointerId, e.clientX);
 
-                        processInput(e.clientX, 'down');
+            processInput(e.clientX, 'down');
         });
 
         window.addEventListener('pointermove', (e) => {
-             // Update position if dragging (optional, but good for sliding adjustment)
-             if (activePointers.has(e.pointerId)) {
-                            activePointers.set(e.pointerId, e.clientX);
-             }
+            // Update position if dragging (optional, but good for sliding adjustment)
+            if (activePointers.has(e.pointerId)) {
+                activePointers.set(e.pointerId, e.clientX);
+            }
         });
 
         window.addEventListener('pointerup', (e) => {
             if (activePointers.has(e.pointerId)) {
                 const startX = activePointers.get(e.pointerId);
-                        processInput(startX, 'up'); // Use original start pos to determine action
-                        activePointers.delete(e.pointerId);
+                processInput(startX, 'up'); // Use original start pos to determine action
+                activePointers.delete(e.pointerId);
             }
         });
-        
+
         window.addEventListener('pointercancel', (e) => {
             if (activePointers.has(e.pointerId)) {
-                            processInput(activePointers.get(e.pointerId), 'up');
-                        activePointers.delete(e.pointerId);
+                processInput(activePointers.get(e.pointerId), 'up');
+                activePointers.delete(e.pointerId);
             }
         });
 
-                        function processInput(x, type) {
+        function processInput(x, type) {
             const isLeft = x < window.innerWidth / 2;
 
-                        if (type === 'down') {
+            if (type === 'down') {
                 if (isLeft) handleInput('jump');  // Left = Jump
-                        else handleInput('slide_down');   // Right = Slide
+                else handleInput('slide_down');   // Right = Slide
             } else if (type === 'up') {
                 if (!isLeft) handleInput('slide_up'); // Right Release = Slide Up
             }
@@ -860,38 +833,37 @@
 
         // Keep Keyboard listeners for PC
         window.addEventListener('keydown', e => {
-            // ... (keep existing keydown logic) ...
             const code = e.code;
 
-                        if ((code === 'Space' || code === 'Enter') && document.getElementById('game-over').style.display !== 'none') {
-                            resetGame();
-                        return;
+            if ((code === 'Space' || code === 'Enter') && document.getElementById('game-over').style.display !== 'none') {
+                resetGame();
+                return;
             }
 
-                        if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW' || e.key === ' ') {
-                            e.preventDefault();
-                        handleInput('jump');
+            if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW' || e.key === ' ') {
+                e.preventDefault();
+                handleInput('jump');
             }
 
-                        if (code === 'ArrowDown' || code === 'KeyS') {
-                            e.preventDefault();
-                        handleInput('slide_down');
+            if (code === 'ArrowDown' || code === 'KeyS') {
+                e.preventDefault();
+                handleInput('slide_down');
             }
         });
 
         window.addEventListener('keyup', e => {
             if (e.code === 'ArrowDown' || e.code === 'KeyS') {
-                            handleInput('slide_up');
+                handleInput('slide_up');
             }
         });
 
-                        // Start Helper
-                        function startFirst() {
+        // Start Helper
+        function startFirst() {
             if (frame === 0) resetGame();
         }
 
-                        // Init
-                        init();
+        // Init
+        init();
 
     </script>
 </body>
