@@ -7,6 +7,9 @@
     <title>RanRun (Ranbot Run)</title>
     <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         body {
             margin: 0;
@@ -15,9 +18,7 @@
             font-family: 'Pretendard', sans-serif;
             user-select: none;
             -webkit-user-select: none;
-            /* Safari */
             touch-action: none;
-            /* GLOBAL DISABLE SCROLL */
         }
 
         canvas {
@@ -25,7 +26,6 @@
             width: 100vw;
             height: 100vh;
             touch-action: none;
-            /* CRITICAL: Allows raw touch input */
         }
 
         #ui-layer {
@@ -41,7 +41,6 @@
             padding: 20px;
             box-sizing: border-box;
             touch-action: none;
-            /* CRITICAL: Allows raw touch input */
         }
 
         #score-box {
@@ -77,7 +76,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: none;
             pointer-events: auto;
             flex-direction: column;
@@ -85,6 +84,27 @@
             justify-content: center;
             color: #fff;
             z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #leaderboard {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 16px;
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         button {
@@ -164,11 +184,18 @@
 
     <div id="start-screen" style="
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5); z-index: 50; display: flex; flex-direction: column;
+        background: rgba(0,0,0,0.6); z-index: 50; display: flex; flex-direction: column;
         align-items: center; justify-content: center; color: white;
-        pointer-events: auto; /* Force clickable */
+        pointer-events: auto;
     ">
         <h1 style="font-size: 40px; margin-bottom: 20px; text-shadow: 2px 2px 0 #000;">RanRun</h1>
+
+        <input type="text" id="nickname" placeholder="Enter Nickname" maxlength="8" style="
+            padding: 15px; font-size: 20px; border-radius: 10px; border: none;
+            width: 200px; text-align: center; margin-bottom: 20px;
+            font-family: 'Pretendard';
+        ">
+
         <div
             style="font-size: 18px; text-align: center; margin-bottom: 30px; line-height: 1.5; text-shadow: 1px 1px 0 #000;">
             PC: SPACE=JUMP | DOWN=SLIDE<br>
@@ -197,11 +224,18 @@
     </style>
 
     <div id="game-over">
-        <h1 style="font-size:60px; margin-bottom:10px;">GAME OVER</h1>
-        <p style="font-size:24px; margin-bottom:30px;">Score: <span id="final-score">0</span></p>
-        <button onpointerdown="event.stopPropagation()" onclick="resetGame()">RETRY (SPACE)</button>
-        <button onpointerdown="event.stopPropagation()" onclick="location.href='games.html'"
-            style="background:#555; color:#fff; box-shadow:0 4px 0 #333; margin-top:10px;">EXIT</button>
+        <h1 style="font-size:40px; margin-bottom:10px;">GAME OVER</h1>
+        <p style="font-size:24px; margin:0;">Score: <span id="final-score">0</span></p>
+
+        <div id="leaderboard">
+            <div style="text-align:center; color:#ddd;">Loading Ranking...</div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button onpointerdown="event.stopPropagation()" onclick="resetGame()">RETRY</button>
+            <button onpointerdown="event.stopPropagation()" onclick="location.href='games.html'"
+                style="background:#555; color:#fff; box-shadow:0 4px 0 #333; margin-top:20px;">EXIT</button>
+        </div>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -784,12 +818,100 @@
             for (let i = 0; i < 5; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 15, color: color });
         }
 
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAclshYalakwGjERwr9DRXUY2RIX0EqV-s",
+            authDomain: "stock-ranking-15c25.firebaseapp.com",
+            projectId: "stock-ranking-15c25",
+            storageBucket: "stock-ranking-15c25.firebasestorage.app",
+            messagingSenderId: "170157369706",
+            appId: "1:170157369706:web:01dfb897a55d47bf139d13",
+            measurementId: "G-V7DB52X8BE"
+        };
+
+        let db;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+        }
+
+        let currentNickname = "Anonymous";
+
         // --- START SCREEN LOGIC ---
         function startGame() {
+            const nickInput = document.getElementById('nickname');
+            const name = nickInput.value.trim();
+
+            if (!name) {
+                alert("Please enter a nickname!");
+                nickInput.focus();
+                return;
+            }
+
+            currentNickname = name;
+
             document.getElementById('start-screen').style.display = 'none';
-            // Also hide game-over if it was somehow shown
             document.getElementById('game-over').style.display = 'none';
             resetGame();
+        }
+
+        // --- GAME OVER & RANKING ---
+        function gameOver() {
+            isRunning = false;
+            const finalScore = Math.floor(score);
+            document.getElementById('final-score').innerText = finalScore;
+            document.getElementById('game-over').style.display = 'flex';
+
+            // Upload Score & Fetch Ranking
+            if (db) {
+                const scoresRef = db.collection('ranrun_scores');
+
+                // 1. Upload
+                scoresRef.add({
+                    name: currentNickname,
+                    score: finalScore,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    console.log("Score uploaded!");
+                    loadRankings();
+                }).catch(err => {
+                    console.error("Error uploading score:", err);
+                    document.getElementById('leaderboard').innerHTML = "Error saving score.";
+                });
+            }
+        }
+
+        function loadRankings() {
+            if (!db) return;
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = "<div style='text-align:center;'>Loading...</div>";
+
+            db.collection('ranrun_scores')
+                .orderBy('score', 'desc')
+                .limit(10)
+                .get()
+                .then(snapshot => {
+                    let html = "";
+                    let rank = 1;
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isMe = data.name === currentNickname && data.score === Math.floor(score);
+                        html += `
+                            <div class="rank-item" style="${isMe ? 'color:#ffff00; font-weight:bold;' : 'color:#eee;'}">
+                                <span>${rank}. ${data.name}</span>
+                                <span>${data.score}</span>
+                            </div>
+                        `;
+                        rank++;
+                    });
+                    leaderboard.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Error fetching rankings:", err);
+                    leaderboard.innerHTML = "Failed to load rankings.";
+                });
         }
 
         // --- GLOBAL INPUT HANDLING (FAILSAFE) ---
