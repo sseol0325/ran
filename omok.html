@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>란봇 | 오목 (Firebase)</title>
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <!-- Material Icons -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Shared Theme CSS -->
+    <link rel="stylesheet" href="theme.css">
+
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Lobby Section */
+        #lobby-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            gap: 24px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-sub);
+            margin-top: 0;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 32px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-field {
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        button {
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Game Section */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 16px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .user-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 80px;
+        }
+
+        .timer-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 6px 12px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            font-size: 14px;
+            color: var(--text-main);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .timer-box.active-turn {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        .timer-box.byoyomi {
+            color: #ef4444;
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .turn-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stone-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .stone-black {
+            background: black;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stone-white {
+            background: white;
+            border: 1px solid #ccc;
+        }
+
+        #board-area {
+            position: relative;
+            background: #eebb88;
+            /* Wood texture approx */
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            touch-action: none;
+            max-width: 100%;
+            aspect-ratio: 1;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        .status-msg {
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .room-code-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            z-index: 50;
+        }
+
+        /* MODAL - Bottom Sheet Style */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            /* Transparent so board is visible */
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+            /* Align to bottom */
+            justify-content: center;
+            padding-bottom: 30px;
+            pointer-events: none;
+            /* Allow seeing through, click buttons via child pointer-events */
+        }
+
+        .modal-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 24px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--card-border);
+            animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            pointer-events: auto;
+            /* Enable clicks on the card */
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .modal-desc {
+            color: var(--text-sub);
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btns button {
+            flex: 1;
+            padding: 12px;
+            /* Smaller padding */
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <button class="home-btn" onclick="location.href='games.html'" id="back-btn">
+        <span class="material-symbols-rounded" style="font-size: 28px;">arrow_back</span>
+    </button>
+
+    <div class="container">
+
+        <!-- LOBBY -->
+        <div id="lobby-screen">
+            <div style="text-align: center;">
+                <h1 class="title">오목</h1>
+                <p class="subtitle">실시간 멀티플레이</p>
+            </div>
+
+            <div class="card">
+                <button class="btn-primary" id="create-room-btn">방 만들기</button>
+
+                <div style="height: 1px; background: var(--card-border); margin: 8px 0;"></div>
+
+                <div class="input-group">
+                    <input type="number" id="room-code-input" class="input-field" placeholder="입장 코드 2자리" maxlength="2">
+                    <button class="btn-secondary" id="join-room-btn">입장하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME -->
+        <div id="game-screen">
+            <div class="game-header">
+                <!-- Opponent Info -->
+                <div class="user-panel">
+                    <span class="stone-icon" id="opp-stone"></span>
+                    <div class="timer-box" id="opp-timer">05:00</div>
+                </div>
+
+                <div class="turn-indicator" id="my-color-display">
+                    <span class="stone-icon" id="my-stone-icon"></span>
+                    <span>나</span>
+                </div>
+
+                <!-- My Info -->
+                <div class="user-panel">
+                    <span class="stone-icon" id="my-stone"></span>
+                    <div class="timer-box" id="my-timer">05:00</div>
+                </div>
+
+                <!-- Explicit Quit Button -->
+                <button class="icon-btn" onclick="leaveRoom()" style="margin-left: 8px; color: var(--text-muted);">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <div class="status-msg" id="status-msg">대기 중...</div>
+
+            <div id="board-area">
+                <div class="room-code-display" id="room-display">CODE: --</div>
+                <canvas id="omok-board"></canvas>
+            </div>
+
+            <!-- CHAT SECTION -->
+            <div id="chat-container">
+                <div id="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="메시지 입력..." maxlength="50">
+                    <button id="chat-send-btn">전송</button>
+                </div>
+            </div>
+        </div>
+
+        <audio id="stone-sound" src="stone.mp3" preload="auto"></audio>
+
+        <style>
+            /* Chat CSS */
+            #chat-container {
+                width: 100%;
+                max-width: 100%;
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 12px;
+                padding: 12px;
+                box-sizing: border-box;
+                margin-top: 8px;
+            }
+
+            #chat-messages {
+                height: 100px;
+                overflow-y: auto;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.3);
+                margin-bottom: 8px;
+                padding: 8px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 14px;
+            }
+
+            .chat-msg {
+                padding: 6px 12px;
+                border-radius: 12px;
+                background: #ffffff;
+                word-break: break-all;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            }
+
+            .chat-msg.my-msg {
+                background: #e0e7ff;
+                /* Primary Light Opaque */
+                align-self: flex-end;
+                color: #4338ca;
+                /* Darker Primary */
+                font-weight: 600;
+                border-bottom-right-radius: 2px;
+            }
+
+            .chat-msg.opp-msg {
+                align-self: flex-start;
+                background: #f3f4f6;
+                /* Gray 100 */
+                color: #1f2937;
+                border-bottom-left-radius: 2px;
+            }
+
+            .chat-msg.sys-msg {
+                align-self: center;
+                font-size: 12px;
+                color: #6b7280;
+                background: rgba(255, 255, 255, 0.8);
+                border: none;
+                box-shadow: none;
+                border-radius: 8px;
+            }
+
+            .chat-input-area {
+                display: flex;
+                gap: 8px;
+            }
+
+            #chat-input {
+                flex: 1;
+                padding: 8px;
+                border-radius: 8px;
+                border: 1px solid var(--card-border);
+                outline: none;
+            }
+
+            #chat-send-btn {
+                padding: 8px 16px;
+                border-radius: 8px;
+                background: var(--primary);
+                color: white;
+                border: none;
+                font-weight: 700;
+                cursor: pointer;
+            }
+        </style>
+
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-card">
+            <div class="modal-title" id="result-title">게임 종료</div>
+            <div class="modal-desc" id="result-desc">승리!</div>
+            <div class="modal-btns">
+                <button class="btn-secondary" onclick="leaveRoom()">나가기</button>
+                <button class="btn-primary" id="rematch-btn" onclick="voteRematch()">재대결</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="theme.js"></script>
+    <script>
+        // Check if Firebase is loaded
+        if (typeof firebase === 'undefined') {
+            alert('오류: Firebase 로딩 실패. 인터넷 연결을 확인해주세요.');
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAclshYalakwGjERwr9DRXUY2RIX0EqV-s",
+            authDomain: "stock-ranking-15c25.firebaseapp.com",
+            projectId: "stock-ranking-15c25",
+            storageBucket: "stock-ranking-15c25.firebasestorage.app",
+            messagingSenderId: "170157369706",
+            appId: "1:170157369706:web:01dfb897a55d47bf139d13",
+            measurementId: "G-V7DB52X8BE"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+        const roomsRef = db.collection('omok_rooms');
+
+        // Elements
+        const lobbyScreen = document.getElementById('lobby-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const createBtn = document.getElementById('create-room-btn');
+        const joinBtn = document.getElementById('join-room-btn');
+        const codeInput = document.getElementById('room-code-input');
+        const canvas = document.getElementById('omok-board');
+        const ctx = canvas.getContext('2d');
+        const statusMsg = document.getElementById('status-msg');
+        const roomDisplay = document.getElementById('room-display');
+        const myStoneIcon = document.getElementById('my-stone-icon');
+
+        const myTimerBox = document.getElementById('my-timer');
+        const oppTimerBox = document.getElementById('opp-timer');
+        const myStoneEl = document.getElementById('my-stone');
+        const oppStoneEl = document.getElementById('opp-stone');
+
+        const resultModal = document.getElementById('result-modal');
+        const resultTitle = document.getElementById('result-title');
+        const resultDesc = document.getElementById('result-desc');
+        const rematchBtn = document.getElementById('rematch-btn');
+
+        // Game State
+        let myColor = null;
+        let currentTurn = 'black';
+        let boardState = Array(15).fill().map(() => Array(15).fill(null));
+        let lastMove = null; // {r, c}
+        let roomId = null;
+        let isGameActive = false;
+        let unsubscribe = null;
+        let heartbeatInterval = null;
+
+        // Time State
+        let timerInterval = null;
+        const MAIN_TIME_SEC = 300; // 5 min
+        const BYOYOMI_SEC = 30; // 30 sec
+
+        // Constants
+        const BOARD_SIZE = 15;
+        let CELL_SIZE = 0;
+        const MY_ID = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+
+        // Elements
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatMessages = document.getElementById('chat-messages');
+        const stoneSound = document.getElementById('stone-sound');
+
+        // ... existing elements ...
+
+        // Chat Logic
+        chatSendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text || !roomId) return;
+
+            try {
+                await roomsRef.doc(roomId).update({
+                    messages: firebase.firestore.FieldValue.arrayUnion({
+                        senderId: MY_ID,
+                        text: text,
+                        timestamp: Date.now()
+                    })
+                });
+                chatInput.value = '';
+            } catch (e) {
+                console.error("Chat send failed", e);
+            }
+        }
+
+        function appendMessage(msg) {
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+
+            if (msg.senderId === 'system') {
+                div.classList.add('sys-msg');
+                div.textContent = msg.text;
+            } else if (msg.senderId === MY_ID) {
+                div.classList.add('my-msg');
+                div.textContent = msg.text;
+            } else {
+                div.classList.add('opp-msg');
+                div.textContent = msg.text;
+            }
+
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function getEmptyBoardFlat() {
+            return Array(225).fill(null);
+        }
+
+        // Helper to get board with Black at Center (7, 7)
+        // Center of 15x15 is index 112 (7 * 15 + 7)
+        function getInitialBoard() {
+            const b = Array(225).fill(null);
+            b[112] = 'black'; // 7, 7
+            return b;
+        }
+
+        // --- Lobby Logic ---
+        createBtn.addEventListener('click', async () => {
+            const code = Math.floor(Math.random() * 90 + 10).toString();
+            roomId = code;
+
+            try {
+                await roomsRef.doc(code).set({
+                    id: code,
+                    users: [MY_ID],
+                    board: getInitialBoard(),
+                    turn: 'white',
+                    status: 'waiting',
+                    created: firebase.firestore.FieldValue.serverTimestamp(),
+                    messages: [],
+
+                    // Time Controls
+                    blackMainTime: MAIN_TIME_SEC,
+                    whiteMainTime: MAIN_TIME_SEC,
+                    lastMoveTime: null, // Timer starts AFTER first move
+                    rematchVotes: [],
+                    lastMove: { r: 7, c: 7 }
+                });
+
+                enterGameMode(code);
+                statusMsg.textContent = '상대방을 기다리는 중...';
+                roomDisplay.textContent = `CODE: ${code}`;
+
+                startListening(code);
+
+            } catch (e) {
+                console.error(e);
+                alert('방 생성 실패: ' + e.message);
+            }
+        });
+
+        joinBtn.addEventListener('click', async () => {
+            const code = codeInput.value;
+            if (code.length < 2) {
+                alert('두 자리 코드를 입력해주세요.');
+                return;
+            }
+
+            roomId = code;
+
+            try {
+                const docRef = roomsRef.doc(code);
+                const doc = await docRef.get();
+
+                if (!doc.exists) {
+                    alert('존재하지 않는 방입니다.');
+                    return;
+                }
+                const data = doc.data();
+
+                // Cleanup Stale Users (Lazy Cleanup)
+                let users = data.users || [];
+                const heartbeats = data.heartbeats || {};
+                const now = Date.now();
+
+                // Filter out users who haven't pinged in 30s
+                const activeUsers = users.filter(uid => {
+                    const lastSeen = heartbeats[uid] || 0;
+                    return (now - lastSeen) < 30000;
+                });
+
+                // If cleanup needed
+                if (activeUsers.length < users.length) {
+                    if (activeUsers.length === 0) {
+                        // All users dead -> Delete room
+                        await docRef.delete();
+                        alert('존재하지 않는 방입니다. (초기화됨)');
+                        return;
+                    } else {
+                        // Some users dead -> Update users list
+                        await docRef.update({
+                            users: activeUsers
+                        });
+                        // Continue to join with new list
+                        data.users = activeUsers;
+                    }
+                }
+
+                if (data.users.length >= 2) {
+                    alert('방이 꽉 찼습니다.');
+                    return;
+                }
+
+                await docRef.update({
+                    users: firebase.firestore.FieldValue.arrayUnion(MY_ID),
+                    status: 'playing',
+                    startTime: Date.now(),
+                    // No lastMoveTime update here. Wait for first move.
+                });
+
+                enterGameMode(code);
+                statusMsg.textContent = '연결 중...';
+                roomDisplay.textContent = `CODE: ${code}`;
+
+                startListening(code);
+
+            } catch (e) {
+                console.error(e);
+                alert('방 입장 실패: ' + e.message);
+            }
+        });
+
+        // ...
+
+        let localMsgCount = 0;
+        let lastMoveTimeCache = 0;
+        let isFirstLoad = true;
+
+        function startListening(code) {
+            unsubscribe = roomsRef.doc(code).onSnapshot((doc) => {
+                if (!doc.exists) {
+                    if (isGameActive && !unsubscribe) {
+                        alert('방이 사라졌습니다.');
+                        location.reload();
+                    }
+                    return;
+                }
+
+                const data = doc.data();
+                const users = data.users || [];
+
+                // Assign Color Logic
+                if (!myColor && users.length === 2 && data.status === 'playing') {
+                    const seed = data.startTime || 0;
+                    const creatorIsBlack = (seed % 2) === 0;
+                    const imCreator = (users[0] === MY_ID);
+
+                    myColor = (creatorIsBlack === imCreator) ? 'black' : 'white';
+
+                    // Init UI
+                    myStoneIcon.className = `stone-icon stone-${myColor}`;
+                    myStoneEl.className = `stone-icon stone-${myColor}`;
+                    oppStoneEl.className = `stone-icon stone-${myColor === 'black' ? 'white' : 'black'}`;
+
+                    isGameActive = true;
+                    updateBoardFromData(data.board); // Draw empty board
+
+                    // System msg
+                    appendMessage({ senderId: 'system', text: '게임이 시작되었습니다.' });
+                }
+
+                // CHAT UPDATES
+                const msgs = data.messages || [];
+
+                // If rematch happened, reset local counter
+                if (msgs.length < localMsgCount) {
+                    localMsgCount = 0;
+                }
+
+                if (msgs.length > localMsgCount) {
+                    for (let i = localMsgCount; i < msgs.length; i++) {
+                        appendMessage(msgs[i]);
+                    }
+                    localMsgCount = msgs.length;
+
+                    // Sound for chat? Optional.
+                }
+
+                // SOUND & MOVE UPDATES
+                const serverLastTime = data.lastMoveTime ? data.lastMoveTime.toMillis() : 0;
+
+                if (isFirstLoad) {
+                    lastMoveTimeCache = serverLastTime;
+                    isFirstLoad = false;
+                } else {
+                    // If time advanced, it means a move happened (or game started)
+                    if (serverLastTime > lastMoveTimeCache) {
+                        // Play Sound
+                        stoneSound.currentTime = 0;
+                        stoneSound.play().catch(e => console.log('Sound play blocked', e));
+                        lastMoveTimeCache = serverLastTime;
+                    }
+                }
+
+                // GAME UPDATES
+                if (myColor) {
+                    // Status check
+                    if (data.status === 'waiting') {
+                        statusMsg.textContent = '상대방을 기다리는 중...';
+                    } else {
+                        currentTurn = data.turn;
+
+                        // Winner check
+                        if (data.winner) {
+                            isGameActive = false;
+                            showResult(data.winner);
+                        } else {
+                            if (resultModal.style.display === 'flex') {
+                                // Rematch Reset
+                                resultModal.style.display = 'none';
+                                isGameActive = true;
+                                appendMessage({ senderId: 'system', text: '재대결이 시작되었습니다.' });
+                            }
+
+                            statusMsg.textContent = (currentTurn === myColor) ? '나의 차례입니다' : '상대방의 차례입니다';
+
+                            // Highlight Actve Timer
+                            if (currentTurn === myColor) {
+                                myTimerBox.classList.add('active-turn');
+                                oppTimerBox.classList.remove('active-turn');
+                            } else {
+                                oppTimerBox.classList.add('active-turn');
+                                myTimerBox.classList.remove('active-turn');
+                            }
+                        }
+
+                        if (data.lastMove) lastMove = data.lastMove;
+                        else lastMove = null;
+
+                        updateBoardFromData(data.board);
+
+                        // REMATCH VOTE UPDATE
+                        if (data.rematchVotes && data.rematchVotes.includes(MY_ID)) {
+                            rematchBtn.textContent = '수락 대기중...';
+                            rematchBtn.disabled = true;
+                        } else {
+                            rematchBtn.textContent = '재대결';
+                            rematchBtn.disabled = false;
+                        }
+                    }
+
+                    // TIMER LOGIC START
+                    startTimerTick(data);
+                }
+
+                if (myColor && users.length < 2 && data.status === 'playing' && !data.winner) {
+                    alert('상대방이 나갔습니다. 승리!');
+                    leaveRoom();
+                }
+                // Heartbeat Check (Detect tab close/crash)
+                if (myColor && users.length === 2 && data.status === 'playing' && !data.winner) {
+                    const heartbeats = data.heartbeats || {};
+                    const oppId = users.find(u => u !== MY_ID);
+                    if (oppId && heartbeats[oppId]) {
+                        if (Date.now() - heartbeats[oppId] > 15000) {
+                            roomsRef.doc(roomId).update({
+                                winner: myColor,
+                                endReason: 'disconnect'
+                            }).catch(e => console.log(e));
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- TIMER LOGIC ---
+        function startTimerTick(serverData) {
+            if (timerInterval) clearInterval(timerInterval);
+            if (!isGameActive || serverData.winner) return;
+
+            const now = Date.now();
+            const lastMoveTime = serverData.lastMoveTime ? serverData.lastMoveTime.toMillis() : now;
+
+            const blackMain = serverData.blackMainTime || MAIN_TIME_SEC;
+            const whiteMain = serverData.whiteMainTime || MAIN_TIME_SEC;
+
+            const elapsed = Math.floor((now - lastMoveTime) / 1000);
+
+            timerInterval = setInterval(() => {
+                const currentNow = Date.now();
+                const currentElapsed = Math.floor((currentNow - lastMoveTime) / 1000);
+
+                let bDisplay = blackMain;
+                let wDisplay = whiteMain;
+
+                if (currentTurn === 'black') {
+                    bDisplay = blackMain - currentElapsed;
+                } else {
+                    wDisplay = whiteMain - currentElapsed;
+                }
+                if (msgs.length > localMsgCount) {
+                    for (let i = localMsgCount; i < msgs.length; i++) {
+                        appendMessage(msgs[i]);
+                    }
+                    localMsgCount = msgs.length;
+
+                    // Sound for chat? Optional.
+                }
+
+                // SOUND & MOVE UPDATES
+                const serverLastTime = data.lastMoveTime ? data.lastMoveTime.toMillis() : 0;
+
+                if (isFirstLoad) {
+                    lastMoveTimeCache = serverLastTime;
+                    isFirstLoad = false;
+                } else {
+                    // If time advanced, it means a move happened (or game started)
+                    if (serverLastTime > lastMoveTimeCache) {
+                        // Play Sound
+                        stoneSound.currentTime = 0;
+                        stoneSound.play().catch(e => console.log('Sound play blocked', e));
+                        lastMoveTimeCache = serverLastTime;
+                    }
+                }
+
+                // GAME UPDATES
+                if (myColor) {
+                    // Status check
+                    if (data.status === 'waiting') {
+                        statusMsg.textContent = '상대방을 기다리는 중...';
+                    } else {
+                        currentTurn = data.turn;
+
+                        // Winner check
+                        if (data.winner) {
+                            isGameActive = false;
+                            showResult(data.winner);
+                        } else {
+                            if (resultModal.style.display === 'flex') {
+                                // Rematch Reset
+                                resultModal.style.display = 'none';
+                                isGameActive = true;
+                                appendMessage({ senderId: 'system', text: '재대결이 시작되었습니다.' });
+                            }
+
+                            statusMsg.textContent = (currentTurn === myColor) ? '나의 차례입니다' : '상대방의 차례입니다';
+
+                            // Highlight Actve Timer
+                            if (currentTurn === myColor) {
+                                myTimerBox.classList.add('active-turn');
+                                oppTimerBox.classList.remove('active-turn');
+                            } else {
+                                oppTimerBox.classList.add('active-turn');
+                                myTimerBox.classList.remove('active-turn');
+                            }
+                        }
+
+                        if (data.lastMove) lastMove = data.lastMove;
+                        else lastMove = null;
+
+                        updateBoardFromData(data.board);
+
+                        // REMATCH VOTE UPDATE
+                        if (data.rematchVotes && data.rematchVotes.includes(MY_ID)) {
+                            rematchBtn.textContent = '수락 대기중...';
+                            rematchBtn.disabled = true;
+                        } else {
+                            rematchBtn.textContent = '재대결';
+                            rematchBtn.disabled = false;
+                        }
+                    }
+
+                    // TIMER LOGIC START
+                    startTimerTick(data);
+                }
+
+                if (myColor && users.length < 2 && data.status === 'playing' && !data.winner) {
+                    alert('상대방이 나갔습니다. 승리!');
+                    leaveRoom();
+                }
+            });
+        }
+
+        // --- TIMER LOGIC ---
+        function startTimerTick(serverData) {
+            if (timerInterval) clearInterval(timerInterval);
+            if (!isGameActive || serverData.winner) return;
+
+            const now = Date.now();
+            // serverData.lastMoveTime is a Firestore Timestamp. need .toMillis()
+            const lastMoveTime = serverData.lastMoveTime ? serverData.lastMoveTime.toMillis() : now;
+
+            const blackMain = serverData.blackMainTime || MAIN_TIME_SEC;
+            const whiteMain = serverData.whiteMainTime || MAIN_TIME_SEC;
+
+            const elapsed = Math.floor((now - lastMoveTime) / 1000);
+
+            timerInterval = setInterval(() => {
+                const currentNow = Date.now();
+                const currentElapsed = Math.floor((currentNow - lastMoveTime) / 1000); // Total seconds since last move
+
+                // Calculate display for both
+                // If turn == black: black time reduces. white time static.
+
+                let bDisplay = blackMain;
+                let wDisplay = whiteMain;
+
+                if (currentTurn === 'black') {
+                    bDisplay = blackMain - currentElapsed;
+                } else {
+                    wDisplay = whiteMain - currentElapsed;
+                }
+
+                updateTimerUI(myColor === 'black' ? myTimerBox : oppTimerBox, currentTurn === 'black' ? bDisplay : blackMain);
+                updateTimerUI(myColor === 'white' ? myTimerBox : oppTimerBox, currentTurn === 'white' ? wDisplay : whiteMain);
+
+                // TIMEOUT CHECK (Only the active player checks their own timeout to trigger write)
+                if (currentTurn === myColor && isGameActive) {
+                    const myMain = (myColor === 'black' ? blackMain : whiteMain);
+                    const remainingMain = myMain - currentElapsed;
+
+                    if (remainingMain < 0) {
+                        let realTimeLeft;
+                        if (myMain > 0) {
+                            realTimeLeft = myMain - currentElapsed;
+                            if (realTimeLeft < 0) {
+                                const byoyomiUsed = -realTimeLeft;
+                                if (byoyomiUsed > BYOYOMI_SEC) {
+                                    triggerTimeout();
+                                }
+                            }
+                        } else {
+                            // Already in Byoyomi at start of turn
+                            if (currentElapsed > BYOYOMI_SEC) {
+                                triggerTimeout();
+                            }
+                        }
+                    }
+                }
+
+            }, 1000);
+        }
+
+        function updateTimerUI(el, seconds) {
+            // Logic: If seconds > 0: Show Min:Sec. 
+            // If seconds <= 0: Show Byoyomi (30 - abs(seconds))
+
+            if (seconds > 0) {
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                el.innerText = `${pad(m)}:${pad(s)}`;
+                el.classList.remove('byoyomi');
+            } else {
+                // Byoyomi active
+                // Elapsed into byoyomi = -seconds.
+                // Remaining = 30 - (-seconds)
+                const remain = Math.floor(BYOYOMI_SEC + seconds);
+                if (remain < 0) el.innerText = "0s";
+                else el.innerText = `초읽기 ${remain}s`;
+                el.classList.add('byoyomi');
+            }
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : n; }
+
+        async function triggerTimeout() {
+            if (!isGameActive) return;
+            isGameActive = false;
+            try {
+                await roomsRef.doc(roomId).update({
+                    winner: (myColor === 'black' ? 'white' : 'black'), // Opponent wins
+                    endReason: 'timeout'
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        function updateBoardFromData(flatBoard) {
+            if (!flatBoard) return;
+            for (let i = 0; i < 225; i++) {
+                const r = Math.floor(i / 15);
+                const c = i % 15;
+                boardState[r][c] = flatBoard[i];
+            }
+            drawBoard();
+        }
+
+        function showResult(winner) {
+            resultModal.style.display = 'flex';
+            if (winner === myColor) {
+                resultTitle.textContent = "승리!";
+                resultDesc.textContent = "축하합니다! 멋진 승부였습니다.";
+            } else {
+                resultTitle.textContent = "패배";
+                resultDesc.textContent = "아쉽네요. 다시 도전해보세요!";
+            }
+        }
+
+        async function voteRematch() {
+            rematchBtn.textContent = '수락 대기중...';
+            rematchBtn.disabled = true;
+            try {
+                // Perform Vote AND Check/Reset in a single transaction
+                await db.runTransaction(async (t) => {
+                    const docRef = roomsRef.doc(roomId);
+                    const doc = await t.get(docRef);
+                    if (!doc.exists) throw "Room does not exist";
+
+                    const data = doc.data();
+                    let votes = data.rematchVotes || [];
+
+                    // Add my vote if not exists
+                    if (!votes.includes(MY_ID)) {
+                        votes.push(MY_ID);
+                    }
+
+                    if (votes.length >= 2) {
+                        // Validate users length before reset
+                        if (data.users && data.users.length < 2) {
+                            // Someone leaving? Don't reset, just update vote.
+                            t.update(docRef, { rematchVotes: votes });
+                        } else {
+                            // Reset Game with Auto-Black
+                            t.update(docRef, {
+                                board: getInitialBoard(),
+                                winner: firebase.firestore.FieldValue.delete(),
+                                turn: 'white', // White moves first
+                                rematchVotes: [],
+                                blackMainTime: MAIN_TIME_SEC,
+                                whiteMainTime: MAIN_TIME_SEC,
+                                lastMoveTime: null, // Timer reset. Starts on first move.
+                                lastMove: { r: 7, c: 7 }, // Visual indicator for the auto-placed stone
+                                messages: []
+                            });
+                        }
+                    } else {
+                        // Just update votes
+                        t.update(docRef, {
+                            rematchVotes: votes
+                        });
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                alert("재대결 요청 중 오류가 발생했습니다.");
+                rematchBtn.disabled = false;
+                rematchBtn.textContent = '재대결';
+            }
+        }
+
+        async function leaveRoom() {
+            if (unsubscribe) unsubscribe();
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (roomId) {
+                try {
+                    const doc = await roomsRef.doc(roomId).get();
+                    if (doc.exists) {
+                        const currentUsers = doc.data().users || [];
+                        if (currentUsers.length <= 1) {
+                            roomsRef.doc(roomId).delete();
+                        } else {
+                            roomsRef.doc(roomId).update({
+                                users: firebase.firestore.FieldValue.arrayRemove(MY_ID),
+                                rematchVotes: firebase.firestore.FieldValue.arrayRemove(MY_ID) // Also remove my vote
+                            });
+                        }
+                    }
+                } catch (e) { }
+            }
+            location.href = 'games.html';
+        }
+
+        window.onbeforeunload = () => { if (roomId) leaveRoom(); };
+
+
+        // --- Game UI Drawing ---
+        function enterGameMode(id) {
+            lobbyScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            document.getElementById('back-btn').style.display = 'none';
+            resizeCanvas();
+            drawBoard();
+
+            // Start Heartbeat (every 4s)
+            heartbeatInterval = setInterval(async () => {
+                if (roomId && isGameActive) {
+                    try {
+                        const updates = {};
+                        updates[`heartbeats.${MY_ID}`] = Date.now();
+                        await roomsRef.doc(roomId).update(updates);
+                    } catch (e) {
+                        // ignore update errors (users might be offline)
+                    }
+                }
+            }, 4000);
+        }
+
+        function resizeCanvas() {
+            const maxWidth = Math.min(window.innerWidth - 40, 450);
+            canvas.width = maxWidth;
+            canvas.height = maxWidth;
+            CELL_SIZE = maxWidth / BOARD_SIZE;
+        }
+
+        window.addEventListener('resize', () => {
+            if (gameScreen.style.display === 'flex') {
+                resizeCanvas();
+                drawBoard();
+            }
+        });
+
+        function drawBoard() {
+            ctx.fillStyle = '#eebb88';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+
+            const halfCell = CELL_SIZE / 2;
+
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                ctx.beginPath();
+                ctx.moveTo(halfCell, halfCell + i * CELL_SIZE);
+                ctx.lineTo(canvas.width - halfCell, halfCell + i * CELL_SIZE);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(halfCell + i * CELL_SIZE, halfCell);
+                ctx.lineTo(halfCell + i * CELL_SIZE, canvas.height - halfCell);
+                ctx.stroke();
+            }
+
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (boardState[r][c]) {
+                        drawStone(r, c, boardState[r][c]);
+                    }
+                }
+            }
+        }
+
+        function drawStone(row, col, color) {
+            const x = col * CELL_SIZE + CELL_SIZE / 2;
+            const y = row * CELL_SIZE + CELL_SIZE / 2;
+            const radius = CELL_SIZE * 0.4;
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+
+            if (color === 'black') {
+                const grad = ctx.createRadialGradient(x - radius / 3, y - radius / 3, radius / 10, x, y, radius);
+                grad.addColorStop(0, '#555');
+                grad.addColorStop(1, '#000');
+                ctx.fillStyle = grad;
+            } else {
+                const grad = ctx.createRadialGradient(x - radius / 3, y - radius / 3, radius / 10, x, y, radius);
+                grad.addColorStop(0, '#fff');
+                grad.addColorStop(1, '#ddd');
+                ctx.fillStyle = grad;
+            }
+
+            ctx.fill();
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            // LAST MOVE MARKER
+            if (lastMove && lastMove.r === row && lastMove.c === col) {
+                ctx.beginPath();
+                // Draw a small red mark
+                ctx.arc(x, y, radius * 0.3, 0, Math.PI * 2);
+                ctx.fillStyle = '#ef4444';
+                // Or maybe a triangle? Circle is cleaner.
+                ctx.fill();
+            }
+        }
+
+        // Check if point is inside board
+        function isValid(r, c) {
+            return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
+        }
+
+        // --- RENJU RULES ---
+        function getLineInfo(board, r, c, dr, dc, color) {
+            let count = 1;
+            let openEnds = 0;
+
+            // Forward
+            let i = 1;
+            while (isValid(r + dr * i, c + dc * i) && board[r + dr * i][c + dc * i] === color) {
+                count++;
+                i++;
+            }
+            if (isValid(r + dr * i, c + dc * i) && board[r + dr * i][c + dc * i] === null) openEnds++;
+
+            // Backward
+            let j = 1;
+            while (isValid(r - dr * j, c - dc * j) && board[r - dr * j][c - dc * j] === color) {
+                count++;
+                j++;
+            }
+            if (isValid(r - dr * j, c - dc * j) && board[r - dr * j][c - dc * j] === null) openEnds++;
+
+            return { count, openEnds };
+        }
+
+        // Check 3-3, 4-4, Overline
+        // This is a simplified Renju check. Full Renju is very complex.
+        // We define "Open 3" as a row of 3 that can become a "Open 4" (neither side blocked).
+        // "4" is a row of 4.
+
+        function checkForbidden(board, r, c) {
+            // Only applies to Black
+            const color = 'black';
+
+            // Temporarily place stone
+            board[r][c] = 'black';
+
+            let threeThree = 0;
+            let fourFour = 0;
+            let overLine = false;
+
+            const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+            for (let [dr, dc] of directions) {
+                const info = getLineInfo(board, r, c, dr, dc, color);
+
+                // Overline
+                if (info.count > 5) overLine = true;
+
+                // 4-4 (Count >= 4)
+                if (info.count === 4) {
+                    // For 4-4, we just count "4s". Renju strictly says "double 4" is forbidden.
+                    // Keep it simple: if we form a 4, increment.
+                    // But wait, forming ONE 4 is good. Two 4s is bad.
+                    // Actually, we need to check if we formed a NEW line of 4.
+
+                    // To identify distinct lines, we can check basic counts.
+                    fourFour++;
+                }
+
+                // 3-3 (Open 3s)
+                // Open 3: A row of 3 that has open ends on BOTH sides, AND can develop into an Open 4.
+                // Simplified: count=3 and openEnds=2.
+                // (Or space-jump 3s... ignoring space jumps for simplicity for now as per "Basic" Renju requests usually)
+                if (info.count === 3 && info.openEnds === 2) {
+                    // Also need to check if it's not "false 3" (blocked 4).
+                    // Strict Renju is hard. Let's stick to "Open 3".
+                    threeThree++;
+                }
+            }
+
+            // Restore
+            board[r][c] = null;
+
+            if (overLine) return "6목 이상(장목)은 금수입니다.";
+            if (fourFour >= 2) return "4-4는 금수입니다.";
+            if (threeThree >= 2) return "3-3은 금수입니다.";
+
+            return null; // Allowed
+        }
+
+
+        canvas.addEventListener('click', async (e) => {
+            if (!isGameActive) return;
+            if (currentTurn !== myColor) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Find closest intersection
+            // Padding around cell
+            // Assuming simplified grid click logic
+            // Since we draw with CELL_SIZE, we can map back.
+            // Earlier drawing code calculated CELL_SIZE based on canvas width.
+            // We need to re-calculate CELL_SIZE here or store it globally.
+
+            // Re-calc CELL_SIZE to be safe
+            const canvasSize = canvas.width;
+            const padding = 20;
+            const size = canvasSize - padding * 2;
+            const cellSize = size / (BOARD_SIZE - 1);
+
+            const c = Math.round((x - padding) / cellSize);
+            const r = Math.round((y - padding) / cellSize);
+
+            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) return;
+
+            if (boardState[r][c] !== null) return;
+
+            // --- enforce rules ---
+
+            // 1. Center Start (First move of Black)
+            // How to check move count? Count stones on board.
+            let stoneCount = 0;
+            for (let i = 0; i < 15; i++) for (let j = 0; j < 15; j++) if (boardState[i][j]) stoneCount++;
+
+            if (myColor === 'black' && stoneCount === 0) {
+                if (r !== 7 || c !== 7) {
+                    alert("흑돌의 첫 수는 무조건 정중앙(천원)에 두어야 합니다.");
+                    return;
+                }
+            }
+
+            // 2. Renju Forbidden (Black Only)
+            if (myColor === 'black') {
+                const forbiddenMsg = checkForbidden(boardState, r, c);
+                if (forbiddenMsg) {
+                    alert(`${forbiddenMsg} (렌주룰)`);
+                    return;
+                }
+            }
+
+            // --- Place Stone & Update ---
+            // Optimistic Update
+            boardState[r][c] = myColor;
+            drawBoard();
+
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const docRef = roomsRef.doc(roomId);
+                    const doc = await transaction.get(docRef);
+                    if (!doc.exists) throw "Room gone";
+
+                    const data = doc.data();
+                    if (data.turn !== myColor) throw "Not your turn";
+                    if (data.board[r * 15 + c] !== null) throw "Spot taken";
+
+                    // Double check rules on server side? Or trust client for now.
+                    // Trust client for serverless.
+
+                    const newBoard = [...data.board];
+                    newBoard[r * 15 + c] = myColor;
+
+                    // Check Winner
+                    let winner = null;
+                    if (checkWinLocal(newBoard, r, c, myColor)) {
+                        winner = myColor;
+                    }
+
+                    const now = firebase.firestore.FieldValue.serverTimestamp();
+                    // Calculate time usage...
+
+                    let elapsed = 0;
+                    if (data.lastMoveTime) {
+                        const lastMoveMillis = data.lastMoveTime.toMillis();
+                        elapsed = Math.floor((Date.now() - lastMoveMillis) / 1000);
+                    } else {
+                        // First move of the game (White's first move after Auto-Black)
+                        // Do not deduct time.
+                        elapsed = 0;
+                    }
+
+                    let bTime = data.blackMainTime || MAIN_TIME_SEC;
+                    let wTime = data.whiteMainTime || MAIN_TIME_SEC;
+
+                    if (data.lastMoveTime) {
+                        // Only deduct if timer was running
+                        if (myColor === 'black') {
+                            if (bTime > 0) bTime = bTime - elapsed;
+                            // if already 0/neg, stays same
+                        } else {
+                            if (wTime > 0) wTime = wTime - elapsed;
+                        }
+                    }
+
+
+                    transaction.update(docRef, {
+                        board: newBoard,
+                        turn: myColor === 'black' ? 'white' : 'black',
+                        winner: winner || firebase.firestore.FieldValue.delete(),
+                        lastMoveTime: now,
+                        blackMainTime: bTime,
+                        whiteMainTime: wTime,
+                        lastMove: { r: r, c: c }
+                    });
+
+                    if (winner) transaction.update(docRef, { winner: winner });
+                });
+            } catch (e) {
+                console.error(e);
+                // Revert
+                boardState[r][c] = null;
+                drawBoard();
+                alert("착수 실패: " + e);
+            }
+        });
+
+        function checkWinLocal(flatBoard, row, col, color) {
+            const getCell = (r, c) => {
+                if (r < 0 || r >= 15 || c < 0 || c >= 15) return null;
+                return flatBoard[r * 15 + c];
+            }
+            const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+            for (const [dr, dc] of directions) {
+                let count = 1;
+                for (let i = 1; i < 5; i++) {
+                    if (getCell(row + dr * i, col + dc * i) === color) count++; else break;
+                }
+                for (let i = 1; i < 5; i++) {
+                    if (getCell(row - dr * i, col - dc * i) === color) count++; else break;
+                }
+                if (count >= 5) return true;
+            }
+            return false;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,4010 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>란봇 모의주식</title>
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- Material Icons -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Shared Theme CSS -->
+    <link rel="stylesheet" href="theme.css">
+
+    <style>
+        /* K-Stock Theme */
+        :root {
+            --up-color: #ef4444;
+            --up-bg: rgba(239, 68, 68, 0.08);
+            --down-color: #3b82f6;
+            --down-bg: rgba(59, 130, 246, 0.08);
+
+            --header-h: 60px;
+            --search-h: 60px;
+            --nav-z: 100;
+        }
+
+        /* Light Mode Defaults */
+        body {
+            --glass-bg: rgba(255, 255, 255, 0.98);
+            --surface-1: #ffffff;
+            --surface-2: #f8fafc;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --card-border: rgba(0, 0, 0, 0.08);
+            --btn-max-bg: #e2e8f0;
+            --btn-max-color: #475569;
+        }
+
+        /* Dark Mode Override */
+        body.dark-mode {
+            --glass-bg: rgba(30, 41, 59, 0.98);
+            --surface-1: #1e293b;
+            --surface-2: #0f172a;
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --btn-max-bg: #334155;
+            --btn-max-color: #e2e8f0;
+        }
+
+        html {
+            background-color: #1a1a1a;
+            /* PC Background */
+        }
+
+        body {
+            background: var(--surface-1);
+            /* App Background */
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+
+            /* Reset Padding - We use spacers in HTML now */
+            padding-top: 0;
+            padding-bottom: 0;
+
+            font-family: 'Pretendard', sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Fixed Header */
+        .fixed-top {
+            position: fixed !important;
+            top: 0;
+            left: 50% !important;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            /* Match body */
+            z-index: var(--nav-z);
+            background: var(--glass-bg);
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        header {
+            height: var(--header-h);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .my-info {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            /* Ensure full height alignment */
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            padding: 8px;
+            color: var(--text-main);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+        }
+
+        .search-wrapper {
+            height: var(--search-h);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            max-width: 768px;
+            margin: 0 auto;
+        }
+
+        .search-input-box {
+            width: 100%;
+            height: 42px;
+            background: var(--surface-2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* Layout */
+        .main-container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 20px 16px;
+        }
+
+        .dashboard {
+            background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dash-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+
+        .dash-label {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .dash-val {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .section-header {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 24px 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .my-stock-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .my-item {
+            background: var(--surface-1);
+            padding: 16px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+        }
+
+        .s-item {
+            background: var(--surface-1);
+            padding: 12px 16px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .s-name {
+            font-size: 15px;
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 140px;
+        }
+
+        .s-price {
+            font-size: 15px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .tag-up {
+            color: var(--up-color);
+            background: var(--up-bg);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .tag-down {
+            color: var(--down-color);
+            background: var(--down-bg);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .tag-flat {
+            color: var(--text-sub);
+            background: var(--surface-2);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* Modal & Scrollable Chart */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @media(min-width: 768px) {
+            .modal-overlay {
+                align-items: center;
+            }
+        }
+
+        .sheet {
+            /* Mobile Optimization: Absolute Bottom Fix */
+            position: absolute;
+            /* Force it to bottom regardless of Flex */
+            bottom: 0;
+            left: 0;
+            right: 0;
+
+            width: 100%;
+            max-width: 100vw;
+            /* On Tablet/PC, we can limit width and center */
+            margin: 0 auto;
+
+            background: var(--surface-1);
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+            box-sizing: border-box;
+            /* overflow: hidden; // Might clip chart? */
+            /* display: flex; // CAUSING CHART TO VANISH? */
+            /* flex-direction: column; */
+
+            display: block;
+            /* Restore Block Layout */
+
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .sheet::-webkit-scrollbar {
+            display: none;
+        }
+
+        @media(min-width: 500px) {
+            .sheet {
+                max-width: 500px;
+                /* Center on larger screens */
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%) translateY(100%);
+                /* Need complex transform handling if we center via left:50% */
+            }
+
+            /* Wait, transform:translateY(100%) controls open/close. 
+               Adding translateX(-50%) complicates active state.
+               Better strategy: Keep left:0, right:0, margin:0 auto for centering. 
+               And max-width: 500px.
+            */
+            .sheet {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin: 0 auto;
+                max-width: 500px;
+                transform: translateY(100%);
+            }
+
+            .modal-overlay.active .sheet {
+                transform: translateY(0);
+            }
+        }
+
+        @media(min-width: 768px) {
+            .sheet {
+                border-radius: 24px;
+                transform: scale(0.95);
+            }
+
+            .modal-overlay.active .sheet {
+                transform: scale(1);
+            }
+        }
+
+        .modal-overlay.active .sheet {
+            transform: translateY(0);
+        }
+
+        /* SCROLLABLE CHART CONTAINER */
+        .chart-scroll-area {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            border-radius: 16px;
+            background: var(--surface-2);
+            margin: 16px 0;
+            position: relative;
+            -webkit-overflow-scrolling: touch;
+            /* Smooth scrolling on iOS */
+        }
+
+        .chart-container {
+            height: 220px;
+            /* Width set dynamically by JS based on data length */
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .trade-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            font-weight: 700;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-buy {
+            background: var(--up-color);
+        }
+
+        .btn-sell {
+            background: var(--down-color);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+        }
+
+        /* Input Styling */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .qty-input {
+            width: 80px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-main);
+            border-radius: 8px;
+            transition: border 0.2s;
+        }
+
+        .qty-input:focus {
+            border-color: var(--primary);
+            background: var(--surface-2);
+            outline: none;
+        }
+
+        .chart-tooltip {
+            position: absolute;
+            pointer-events: none;
+            display: none;
+            background: rgba(30, 41, 59, 0.95);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 20;
+            white-space: nowrap;
+            transform: translate(-50%, -120%);
+        }
+
+        /* Sort Chips */
+        .sort-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sort-chip {
+            padding: 8px 14px;
+            border-radius: 20px;
+            background: var(--surface-2);
+            color: var(--text-sub);
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .sort-chip.active {
+            background: var(--text-main);
+            color: var(--surface-1);
+        }
+
+        .btn-max {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--btn-max-bg);
+            color: var(--btn-max-color);
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+        }
+
+        .btn-max:hover {
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        .btn-max:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        /* RANKING */
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .rank-item.me {
+            background: var(--surface-2);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 4px 0;
+            border: 1px solid var(--up-color);
+        }
+
+        .nick-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--surface-2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .nick-badge:hover {
+            border-color: var(--card-border);
+            background: var(--surface-1);
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ranking-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        /* PC Responsive */
+        @media (min-width: 768px) {
+            html {
+                background: var(--surface-1);
+            }
+
+            body {
+                max-width: 1200px !important;
+                margin: 0 auto !important;
+                box-shadow: none !important;
+                border-left: 1px solid var(--card-border);
+                border-right: 1px solid var(--card-border);
+                display: flex;
+                flex-direction: column;
+            }
+
+            .fixed-top {
+                max-width: 1200px !important;
+                position: sticky !important;
+                top: 0;
+                transform: none !important;
+                left: auto !important;
+                width: 100%;
+            }
+
+            .container {
+                display: grid;
+                grid-template-columns: 380px 1fr;
+                gap: 24px;
+                padding: 24px !important;
+                height: calc(100vh - 130px);
+                overflow: hidden;
+            }
+
+            #view-market {
+                overflow-y: auto;
+                padding-right: 12px;
+                height: 100%;
+            }
+
+            #trade-modal {
+                position: static !important;
+                transform: none !important;
+                width: 100% !important;
+                height: 100% !important;
+                border: 1px solid var(--card-border);
+                border-radius: 12px !important;
+                box-shadow: none !important;
+                background: var(--surface-1) !important;
+                display: none;
+                /* Critical for Grid Container to contain inner scroll */
+                min-width: 0;
+                overflow: hidden;
+            }
+
+            #trade-modal.active {
+                display: block !important;
+                animation: none !important;
+            }
+
+            /* Override Sheet Styles for Embedded Mode */
+            #trade-modal .sheet {
+                position: static !important;
+                transform: none !important;
+                border-radius: 0 !important;
+                max-width: none !important;
+                width: 100% !important;
+                background: transparent !important;
+                padding: 16px !important;
+                max-height: 100% !important;
+                overflow-y: auto !important;
+                height: 100%;
+                padding-bottom: 24px !important;
+                box-shadow: none !important;
+                /* Ensure child charts don't expand this container */
+                min-width: 0;
+            }
+
+            /* 2-Column Trade PC Layout */
+            .trade-cols {
+                display: grid;
+                grid-template-columns: 1.2fr 1fr;
+                /* Book slightly wider? or Equal */
+                gap: 24px;
+                align-items: start;
+            }
+
+            /* Make Order Book scrollable/compact on PC */
+            #order-book {
+                /* On PC, maybe limit height to match inputs? */
+                /* But controls are roughly 300px tall. */
+            }
+
+            .modal-handle,
+            .modal-close {
+                display: none !important;
+            }
+
+            #view-community {
+                grid-column: 1 / -1;
+            }
+
+            /* PC Placeholder */
+            #pc-placeholder {
+                grid-column: 2;
+                display: flex !important;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                color: var(--text-sub);
+                background: var(--surface-1);
+                border-radius: 12px;
+                border: 1px solid var(--card-border);
+                height: 100%;
+            }
+
+            /* If modal is active, hide placeholder */
+            #trade-modal.active~#pc-placeholder {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <!-- Firebase SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <div class="fixed-top" style="position:fixed; top:0; left:0; right:0; background:var(--bg); z-index:100;">
+        <header>
+            <div class="header-title" style="display:flex; align-items:center;">
+                <button class="btn-icon" onclick="location.href='index.html'"
+                    style="margin-left: -8px; margin-right:8px;">
+                    <span class="material-symbols-rounded">arrow_back_ios_new</span>
+                </button>
+                <div class="logo">란봇 모의주식</div>
+            </div>
+            <div class="my-info" id="header-user-info">
+                <!-- If Not Logged In -->
+                <button id="btn-login" class="btn-icon" onclick="openLoginModal()"
+                    style="font-size:13px; font-weight:600; background:var(--primary); color:#fff; padding:6px 12px; border-radius:20px; margin-right:8px;">
+                    로그인
+                </button>
+
+                <!-- If Logged In (Hidden by default) -->
+                <div id="user-profile" onclick="openProfileModal()"
+                    style="display:none; align-items:center; gap:8px; cursor:pointer;" title="프로필 설정">
+                    <img id="user-img" src=""
+                        style="width:28px; height:28px; border-radius:50%; object-fit:cover; border:1px solid var(--card-border);">
+                    <span id="user-rank-badge" style="font-size:12px; font-weight:700;"></span>
+                </div>
+
+                <div class="nick-badge" onclick="document.getElementById('nick-modal').classList.add('active')">
+                    <span id="my-nick-display">...</span>
+                    <span class="material-symbols-rounded" style="font-size:14px;">edit</span>
+                </div>
+                <!-- Rank Button (Trophy) -->
+                <div onclick="openRank()" style="cursor:pointer; display:flex; align-items:center;">
+                    <span class="material-symbols-rounded" style="color:#fbbf24; font-size:26px;">emoji_events</span>
+                </div>
+                <!-- Arcade Button (Header) -->
+                <div onclick="openGameModal()"
+                    style="cursor:pointer; display:flex; align-items:center; margin-left:8px;" title="오락실">
+                    <span class="material-symbols-rounded" style="color:#a855f7; font-size:26px;">sports_esports</span>
+                </div>
+                <!-- Admin Lock (Hidden or special access) -->
+                <div id="admin-btn" onclick="openAdmin()" style="display:none; margin-left:8px; cursor:pointer;">
+                    <span class="material-symbols-rounded"
+                        style="color:#ef4444; font-size:24px;">admin_panel_settings</span>
+                </div>
+            </div>
+
+
+            <button id="theme-btn" class="btn-icon" onclick="toggleTheme()">
+                <span class="material-symbols-rounded">dark_mode</span>
+            </button>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div style="display:flex; border-bottom:1px solid var(--card-border); background:var(--bg);">
+            <div id="tab-market" onclick="switchTab('market')"
+                style="flex:1; text-align:center; padding:12px; font-weight:700; color:var(--text-main); border-bottom:2px solid var(--primary); cursor:pointer;">
+                주식 시장
+            </div>
+            <div id="tab-community" onclick="switchTab('community')"
+                style="flex:1; text-align:center; padding:12px; font-weight:400; color:var(--text-sub); border-bottom:2px solid transparent; cursor:pointer;">
+                커뮤니티
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacer for Fixed Header -->
+    <div style="height:130px;"></div>
+
+    <div class="container" style="padding-bottom:80px;">
+        <!-- VIEW: MARKET -->
+        <div id="view-market">
+            <div class="search-wrapper">
+                <div class="search-input-box">
+                    <span class="material-symbols-rounded" style="color:var(--text-sub);">search</span>
+                    <input type="text" id="k-search" class="search-input" placeholder="종목명 또는 코드 검색" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="dashboard">
+                <div class="dash-row">
+                    <div>
+                        <div class="dash-label">총 보유자산</div>
+                        <div class="dash-val" id="d-total">Loading...</div>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div>
+                        <div class="dash-label">주문가능(예수금)</div>
+                        <div style="font-weight:600;" id="d-cash">0원</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Stocks -->
+            <div id="my-stock-section" style="display:none;">
+                <div class="section-header">
+                    내 보유 주식
+                    <span id="my-count" style="font-size:14px; color:var(--text-sub); font-weight:400;">0종목</span>
+                </div>
+                <div id="my-stock-list" class="my-stock-list"></div>
+            </div>
+
+            <!-- Pending Orders -->
+            <div id="pending-section" style="display:none; margin-top:20px;">
+                <div class="section-header">미체결 주문 (예약)</div>
+                <div id="pending-list" class="my-stock-list"></div>
+            </div>
+
+            <!-- Watchlist -->
+            <div id="watch-section" style="display:none;">
+                <div class="section-header">관심 종목</div>
+                <div id="watch-list" class="my-stock-list"></div>
+            </div>
+
+            <!-- All Stocks -->
+            <div class="section-header">실시간 시세</div>
+
+            <!-- Sort Chips -->
+            <div class="sort-scroll">
+                <div class="sort-chip active" onclick="setSort('pop')" data-mode="pop">인기순</div>
+                <div class="sort-chip" onclick="setSort('rise')" data-mode="rise">급상승</div>
+                <div class="sort-chip" onclick="setSort('fall')" data-mode="fall">급하락</div>
+                <div class="sort-chip" onclick="setSort('vol')" data-mode="vol">거래량</div>
+                <div class="sort-chip" onclick="setSort('amt')" data-mode="amt">거래대금</div>
+                <div class="sort-chip" onclick="setSort('name')" data-mode="name">이름순</div>
+            </div>
+
+            <div id="market-list" class="my-stock-list"></div>
+
+            <div id="empty-msg" style="display:none; text-align:center; padding:40px; color:var(--text-sub);">
+                일치하는 종목이 없습니다.
+            </div>
+        </div><!-- End view-market -->
+
+        <!-- VIEW: COMMUNITY -->
+        <div id="view-community" style="display:none; height:calc(100vh - 140px); flex-direction:column;">
+            <div id="chat-list"
+                style="flex:1; overflow-y:auto; padding:16px; background:var(--surface-1); border-radius:12px; margin-bottom:12px;">
+                <!-- Chat Messages -->
+                <div style="text-align:center; color:var(--text-sub); margin-top:20px;">실시간 채팅방에 오신 것을 환영합니다! 👋
+                </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <input id="chat-input" type="text" placeholder="메시지를 입력하세요..."
+                    style="flex:1; background:var(--surface-2); border:none; padding:12px; border-radius:24px; color:var(--text-main); outline:none;"
+                    onkeypress="if(event.key==='Enter') sendChat()">
+                <button onclick="sendChat()"
+                    style="width:48px; height:48px; border-radius:50%; background:var(--primary); border:none; color:#fff; display:flex; align-items:center; justify-content:center;">
+                    <span class="material-symbols-rounded">send</span>
+                </button>
+            </div>
+        </div>
+        <!-- Trade Modal (Inside Container for Grid) -->
+        <div id="trade-modal" class="modal-overlay">
+            <div class="sheet">
+                <!-- Close Button -->
+                <button onclick="closeModal()"
+                    style="position:absolute; top:20px; right:20px; background:var(--surface-2); border:none; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-sub);">
+                    <span class="material-symbols-rounded" style="font-size:20px;">close</span>
+                </button>
+
+                <div style="text-align:center; margin-bottom:12px;">
+                    <div
+                        style="width:40px; height:4px; background:var(--text-sub); opacity:0.2; border-radius:4px; margin:0 auto 16px;">
+                    </div>
+                    <script>
+                        // Global Market Trend (Bull/Bear Indicator)
+                        let MARKET_TREND = 0; // -1 (Bear) to 1 (Bull)
+                    </script>
+                    <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+                        <div id="m-name" style="font-size:20px; font-weight:800;">삼성전자</div>
+                        <span id="m-like-btn" class="material-symbols-rounded" onclick="toggleLikeModal()"
+                            style="font-size:24px; color:var(--text-sub); cursor:pointer;">favorite_border</span>
+                    </div>
+                    <div id="m-code" style="font-size:13px; color:var(--text-sub);">005930</div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <!-- Price/Change Header -->
+                    <div style="display:flex; align-items:baseline; gap:8px;">
+                        <span id="m-price" style="font-size:24px; font-weight:800;">72,000원</span>
+                        <span id="m-change" style="font-size:14px; font-weight:600;">0.00%</span>
+                    </div>
+                    <!-- Chart Toggle -->
+                    <label
+                        style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer; color:var(--text-sub);">
+                        <input type="checkbox" id="tv-chart-check" onchange="toggleChartMode()">
+                        자세한 차트 (TradingView)
+                    </label>
+                </div>
+
+                <!-- TradingView Chart Area -->
+                <div id="tv-chart-area"
+                    style="display:none; width:100%; height:300px; margin-bottom:12px; border:1px solid var(--card-border); border-radius:12px; overflow:hidden;">
+                </div>
+
+                <!-- Scrollable Chart Area (Canvas) -->
+                <div class="chart-scroll-area" id="chart-scroll">
+                    <div class="chart-container" id="chart-box">
+                        <canvas id="chartCanvas"></canvas>
+                        <div id="chart-tooltip" class="chart-tooltip">0원</div>
+                    </div>
+                </div>
+
+                <!-- Trade Columns Wrapper -->
+                <div class="trade-cols">
+                    <div class="trade-col-left">
+                        <!-- Volume & Order Book -->
+                        <div style="margin-bottom:12px;">
+                            <div
+                                style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; color:var(--text-sub);">
+                                <span>거래량: <span id="m-vol-display" style="color:var(--text-main);">0</span></span>
+                                <span>거래대금: <span id="m-amt-display" style="color:var(--text-main);">0</span></span>
+                            </div>
+                            <div id="order-book"
+                                style="border:1px solid var(--card-border); border-radius:8px; overflow:hidden;">
+                                <!-- Rendered via JS -->
+                            </div>
+                        </div> <!-- End Vol/Book container -->
+                    </div> <!-- End Left Col -->
+
+                    <div class="trade-col-right">
+
+                        <div
+                            style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="dash-label">주문 가격</span>
+                                <label
+                                    style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+                                    <input type="checkbox" id="m-market-check" onchange="toggleMarketPrice()"> 시장가
+                                </label>
+                            </div>
+                            <div style="position:relative; width:120px;">
+                                <input id="m-price-input" type="number" inputmode="numeric" pattern="[0-9]*"
+                                    class="qty-input" style="width:100%; text-align:right;" oninput="manualPrice()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <span class="dash-label">내 보유</span>
+                        <span id="m-hold" style="font-weight:700;">0주</span>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:8px;">
+                        <button onclick="qty(-1)" class="btn-icon"
+                            style="background:var(--surface-2); width:48px; height:48px; display:flex; align-items:center; justify-content:center; font-size:24px; padding-bottom:4px;">-</button>
+
+                        <input id="m-qty" type="number" inputmode="numeric" pattern="[0-9]*" value="1" class="qty-input"
+                            oninput="manualQty()" style="width:100px; text-align:center;">
+
+                        <button onclick="qty(1)" class="btn-icon"
+                            style="background:var(--surface-2); width:48px; height:48px; display:flex; align-items:center; justify-content:center; font-size:24px; padding-bottom:4px;">+</button>
+                    </div>
+
+                    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
+                        <button onclick="setMaxSell()" class="btn-max"
+                            style="position:static; width:auto; padding:6px 12px; transform:none; background:var(--down-color);">최대매도</button>
+                        <button onclick="setMax()" class="btn-max"
+                            style="position:static; width:auto; padding:6px 12px; transform:none; background:var(--up-color);">최대매수</button>
+                    </div>
+
+
+                    <div id="est-container"
+                        style="text-align:center; margin:12px 0; color:var(--text-sub); font-size:13px;">
+                        예상 결제금액: <span id="m-total" style="font-weight:700; color:var(--text-main);">0원</span>
+                    </div>
+
+                    <div class="trade-btns">
+                        <button id="btn-sell" class="btn btn-sell" onclick="trade('sell')">매도</button>
+                        <button id="btn-buy" class="btn btn-buy" onclick="trade('buy')">매수</button>
+                    </div>
+                </div> <!-- End Right Col -->
+            </div> <!-- End Trade Cols -->
+
+            <button onclick="closeModal()" class="modal-close"
+                style="width:100%; padding:12px; margin-top:8px; background:transparent; border:none; color:var(--text-sub);">닫기</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- PC Placeholder -->
+    <div id="pc-placeholder" style="display:none;">
+        <span class="material-symbols-rounded" style="font-size:48px; margin-bottom:12px; opacity:0.5;">analytics</span>
+        <div>종목을 선택하여 상세 정보를 확인하세요</div>
+    </div>
+    </div> <!-- End container -->
+
+    <!-- Profile Modal (New) -->
+    <div id="profile-modal" class="modal-overlay">
+        <div class="sheet" style="padding-bottom:40px;">
+            <div style="font-size:20px; font-weight:800; margin-bottom:8px;">내 프로필</div>
+            <div style="color:var(--text-sub); font-size:14px; margin-bottom:24px;">계정 데이터 관리</div>
+
+            <div style="background:var(--surface-1); padding:16px; border-radius:12px; margin-bottom:16px;">
+                <div style="font-size:12px; color:var(--text-sub); margin-bottom:4px;">이메일</div>
+                <div id="pf-email" style="font-weight:700; margin-bottom:12px;">-</div>
+                <!-- UID Removed for Privacy -->
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:24px;">
+                <button onclick="manualCloudSave()" class="btn"
+                    style="justify-content:center; background:var(--primary); color:#fff;">
+                    <span class="material-symbols-rounded" style="font-size:18px; margin-right:4px;">cloud_upload</span>
+                    수동 저장
+                </button>
+                <button onclick="manualCloudLoad()" class="btn"
+                    style="justify-content:center; background:var(--bg); color:var(--text-main); border:1px solid var(--card-border);">
+                    <span class="material-symbols-rounded"
+                        style="font-size:18px; margin-right:4px;">cloud_download</span>
+                    수동 불러오기
+                </button>
+            </div>
+
+            <button onclick="logout()" class="btn"
+                style="width:100%; justify-content:center; background:var(--surface-1); color:var(--loss-color); margin-bottom:12px;">로그아웃</button>
+            <button onclick="document.getElementById('profile-modal').classList.remove('active')" class="btn"
+                style="width:100%; justify-content:center;">닫기</button>
+        </div>
+    </div>
+
+    <!-- GAME MODAL (Arcade) -->
+    <div id="game-modal" class="modal-overlay">
+        <div class="sheet" style="padding:24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-size:20px; font-weight:800; margin:0;">🎮 미니 오락실</h2>
+                <button onclick="closeGameModal()" style="background:none; border:none; cursor:pointer;">
+                    <span class="material-symbols-rounded" style="font-size:24px; color:var(--text-sub);">close</span>
+                </button>
+            </div>
+
+            <div
+                style="background:var(--surface-1); padding:12px; border-radius:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--card-border);">
+                <span style="font-size:14px; color:var(--text-sub);">현재 알바비(임시)</span>
+                <span id="temp-earn-display" style="font-size:18px; font-weight:700; color:var(--up-color);">0원</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <!-- 1. Clicker Job -->
+                <div class="card"
+                    style="padding:16px; display:flex; align-items:center; justify-content:space-between; position:relative; overflow:hidden; min-height:80px;">
+                    <div>
+                        <div style="font-weight:700; font-size:15px;">🧸 인형 눈 붙이기</div>
+                        <div style="font-size:12px; color:var(--text-sub); margin-top:2px;">클릭당 10원 (매크로 방지)</div>
+                    </div>
+                    <button onclick="playClicker()" id="btn-clicker"
+                        style="background:var(--surface-2); border:1px solid var(--card-border); color:var(--text-main); font-weight:700; padding:8px 16px; border-radius:12px; cursor:pointer; min-width:80px; transition:transform 0.1s; position:relative; z-index:10;">
+                        +10원
+                    </button>
+                </div>
+
+                <!-- 2. Daily RPS -->
+                <div class="card" style="padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <div>
+                            <div style="font-weight:700; font-size:15px;">✌️ 가위바위보</div>
+                            <div style="font-size:12px; color:var(--text-sub); margin-top:2px;">
+                                승리 시 <span style="color:var(--up-color);">10만원</span> (일 <span id="rps-cnt">0</span>/5회)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="trade-btns">
+                        <button onclick="playRPS('sc')" class="btn"
+                            style="background:var(--surface-2); color:var(--text-main); font-size:20px;">✌️</button>
+                        <button onclick="playRPS('ro')" class="btn"
+                            style="background:var(--surface-2); color:var(--text-main); font-size:20px;">✊</button>
+                        <button onclick="playRPS('pa')" class="btn"
+                            style="background:var(--surface-2); color:var(--text-main); font-size:20px;">✋</button>
+                    </div>
+                    <div id="rps-result"
+                        style="margin-top:12px; text-align:center; font-size:14px; font-weight:700; min-height:20px; color:var(--text-sub);">
+                        란봇을 이겨보세요!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="sheet" style="padding-bottom:40px;">
+            <div style="font-size:20px; font-weight:800; margin-bottom:8px;">로그인 / 회원가입</div>
+            <div style="color:var(--text-sub); font-size:14px; margin-bottom:24px;">이메일과 비밀번호로 로그인하거나 새로운 계정을 만드세요.
+            </div>
+            <input type="email" id="login-email" placeholder="이메일"
+                style="width:100%; padding:16px; border-radius:12px; border:1px solid var(--card-border); background:var(--surface-2); color:var(--text-main); font-size:16px; margin-bottom:12px; outline:none;">
+            <input type="password" id="login-pw" placeholder="비밀번호 (6자 이상)"
+                style="width:100%; padding:16px; border-radius:12px; border:1px solid var(--card-border); background:var(--surface-2); color:var(--text-main); font-size:16px; margin-bottom:16px; outline:none;">
+            <div style="display:flex; gap:8px;">
+                <button onclick="document.getElementById('login-modal').classList.remove('active')" class="btn"
+                    style="flex:1; justify-content:center; background:var(--surface-1); color:var(--text-main); border:1px solid var(--card-border);">취소</button>
+                <button onclick="processEmailAuth('login')" class="btn"
+                    style="flex:1; justify-content:center; background:var(--primary); color:#fff;">로그인</button>
+                <button onclick="processEmailAuth('signup')" class="btn"
+                    style="flex:1; justify-content:center; background:var(--text-sub); color:#fff;">회원가입</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nickname Modal -->
+    <div id="nick-modal" class="modal-overlay">
+        <div class="sheet" style="padding-bottom:40px;">
+            <div style="font-size:20px; font-weight:800; margin-bottom:8px;">투자자 등록</div>
+            <div style="color:var(--text-sub); font-size:14px; margin-bottom:24px;">랭킹 등록을 위해 닉네임을 설정해주세요.</div>
+            <input type="text" id="nick-input" placeholder="닉네임 입력 (2~8자)" maxlength="8"
+                style="width:100%; padding:16px; border-radius:12px; border:1px solid var(--card-border); background:var(--surface-2); color:var(--text-main); font-size:16px; margin-bottom:16px; outline:none;">
+            <div style="display:flex; gap:8px;">
+                <button onclick="document.getElementById('nick-modal').classList.remove('active')" class="btn"
+                    style="flex:1; justify-content:center; background:var(--surface-1); color:var(--text-main); border:1px solid var(--card-border);">취소</button>
+                <button id="nick-btn" onclick="setNickname()" class="btn"
+                    style="flex:2; justify-content:center; background:var(--text-main); color:var(--surface-1);">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ranking Modal -->
+    <div id="rank-modal" class="modal-overlay">
+        <div class="sheet" style="height:80vh; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:20px; font-weight:800;">실시간 자산 랭킹</span>
+                <span onclick="closeRank()" class="material-symbols-rounded"
+                    style="cursor:pointer; color:var(--text-sub);">close</span>
+            </div>
+            <div style="font-size:13px; color:var(--text-sub); margin-bottom:12px;">
+                로그인한 유저만 랭킹에 표시됩니다.
+            </div>
+            <div style="flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;" id="rank-list">
+                <!-- Rank Items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="modal-overlay">
+        <div class="sheet" style="height:80vh; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-size:20px; font-weight:800; color:#ef4444;">관리자 모드</span>
+                <span onclick="document.getElementById('admin-modal').classList.remove('active')"
+                    class="material-symbols-rounded" style="cursor:pointer; color:var(--text-sub);">close</span>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-bottom:16px;">
+                <input id="admin-search" type="text" placeholder="닉네임 검색"
+                    style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--card-border); background:var(--surface-2); color:var(--text-main);">
+                <button onclick="adminSearchUser()" class="btn"
+                    style="background:var(--text-main); color:var(--surface-1);">검색</button>
+            </div>
+
+            <div id="admin-result"
+                style="flex:1; overflow-y:auto; padding:8px; border:1px solid var(--card-border); border-radius:8px; background:var(--surface-1);">
+                <!-- Search Results -->
+                <div style="text-align:center; color:var(--text-sub); margin-top:20px;">유저를 검색하세요.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Theme JS -->
+    <script src="theme.js"></script>
+
+    <script>
+        // --- DATA ---
+        // Same 100+ Stocks
+        const STOCK_DEFS = [
+            { c: "005930", n: "삼성전자", en: "samsung", p: 73000 }, { c: "000660", n: "SK하이닉스", en: "sk hynix", p: 162000 }, { c: "373220", n: "LG에너지솔루션", en: "lg energy", p: 395000 }, { c: "207940", n: "삼성바이오로직스", en: "samba", p: 820000 }, { c: "005380", n: "현대차", en: "hyundai", p: 245000 },
+            { c: "000270", n: "기아", en: "kia", p: 122000 }, { c: "068270", n: "셀트리온", en: "celltrion", p: 185000 }, { c: "005490", n: "POSCO홀딩스", en: "posco", p: 430000 }, { c: "035420", n: "NAVER", en: "naver", p: 195000 }, { c: "035720", n: "카카오", en: "kakao", p: 55000 },
+            { c: "006400", n: "삼성SDI", en: "sdi", p: 420000 }, { c: "051910", n: "LG화학", en: "lg chem", p: 460000 }, { c: "003670", n: "포스코퓨처엠", en: "posco future", p: 310000 }, { c: "028260", n: "삼성물산", en: "samsung c&t", p: 165000 }, { c: "012330", n: "현대모비스", en: "mobis", p: 245000 },
+            { c: "105560", n: "KB금융", en: "kb", p: 73000 }, { c: "055550", n: "신한지주", en: "shinhan", p: 46000 }, { c: "247540", n: "에코프로비엠", en: "ecopro bm", p: 250000 }, { c: "086520", n: "에코프로", en: "ecopro", p: 600000 }, { c: "329180", n: "HD현대중공업", en: "hd hyundai", p: 125000 },
+            { c: "032830", n: "삼성생명", en: "samsung life", p: 98000 }, { c: "015760", n: "한국전력", en: "kepco", p: 23000 }, { c: "003550", n: "LG", en: "lg", p: 98000 }, { c: "034020", n: "두산에너빌리티", en: "doosan", p: 17000 }, { c: "017670", n: "SK텔레콤", en: "sk telecom", p: 53000 },
+            { c: "011200", n: "HMM", en: "hmm", p: 19000 }, { c: "000810", n: "삼성화재", en: "samsung fire", p: 340000 }, { c: "010130", n: "고려아연", en: "korea zinc", p: 490000 }, { c: "009150", n: "삼성전기", en: "samsung electro", p: 150000 }, { c: "018260", n: "삼성에스디에스", en: "sds", p: 165000 },
+            { c: "293490", n: "카카오게임즈", en: "kakao games", p: 25000 }, { c: "263750", n: "펄어비스", en: "pearl abyss", p: 31000 }, { c: "251270", n: "넷마블", en: "netmarble", p: 60000 }, { c: "036570", n: "엔씨소프트", en: "ncsoft", p: 200000 }, { c: "352820", n: "하이브", en: "hybe", p: 220000 },
+            { c: "041510", n: "에스엠", en: "sm", p: 88000 }, { c: "122870", n: "와이지엔터테인먼트", en: "yg", p: 45000 }, { c: "097950", n: "CJ제일제당", en: "cj", p: 310000 }, { c: "004370", n: "농심", en: "nongshim", p: 400000 }, { c: "271560", n: "오리온", en: "orion", p: 98000 },
+            { c: "035900", n: "JYP Ent.", en: "jyp", p: 75000 }, { c: "196170", n: "알테오젠", en: "alteogen", p: 185000 }, { c: "028300", n: "HLB", en: "hlb", p: 85000 }, { c: "066970", n: "엘앤에프", en: "lnf", p: 170000 }, { c: "403870", n: "HPSP", en: "hpsp", p: 48000 },
+            { c: "272210", n: "한화시스템", en: "hanwha", p: 18000 }, { c: "005935", n: "삼성전자우", en: "samsung pref", p: 62000 }, { c: "010950", n: "S-Oil", en: "soil", p: 75000 }, { c: "030200", n: "KT", en: "kt", p: 38000 }, { c: "036460", n: "한국가스공사", en: "kogas", p: 32000 },
+            // Added 50 Stocks
+            { c: "066570", n: "LG전자", en: "lg elec", p: 95000 }, { c: "096770", n: "SK이노베이션", en: "sk innovation", p: 115000 }, { c: "012450", n: "한화에어로스페이스", en: "hanwha aero", p: 165000 }, { c: "003490", n: "대한항공", en: "korean air", p: 22000 }, { c: "316140", n: "우리금융지주", en: "woori", p: 14500 },
+            { c: "086790", n: "하나금융지주", en: "hana", p: 55000 }, { c: "138040", n: "메리츠금융지주", en: "meritz", p: 75000 }, { c: "241560", n: "두산밥캣", en: "doosan bobcat", p: 48000 }, { c: "004020", n: "현대제철", en: "hyundai steel", p: 32000 }, { c: "011780", n: "금호석유", en: "kumho petro", p: 130000 },
+            { c: "323410", n: "카카오뱅크", en: "kakao bank", p: 25000 }, { c: "259960", n: "크래프톤", en: "krafton", p: 260000 }, { c: "090430", n: "아모레퍼시픽", en: "amore", p: 125000 }, { c: "034220", n: "LG디스플레이", en: "lg display", p: 11000 }, { c: "383220", n: "F&F", en: "fnf", p: 65000 },
+            { c: "021240", n: "코웨이", en: "coway", p: 58000 }, { c: "086280", n: "현대글로비스", en: "hyundai glovis", p: 185000 }, { c: "035760", n: "CJ ENM", en: "cj enm", p: 75000 }, { c: "035250", n: "강원랜드", en: "kangwon land", p: 15000 }, { c: "047810", n: "한국항공우주", en: "kai", p: 52000 },
+            { c: "128940", n: "한미약품", en: "hanmi", p: 310000 }, { c: "000100", n: "유한양행", en: "yuhan", p: 78000 }, { c: "008770", n: "호텔신라", en: "silla", p: 58000 }, { c: "011170", n: "롯데케미칼", en: "lotte chem", p: 105000 }, { c: "034730", n: "SK", en: "sk inc", p: 155000 },
+            { c: "000720", n: "현대건설", en: "hyundai eng", p: 31000 }, { c: "078930", n: "GS", en: "gs", p: 48000 }, { c: "042660", n: "한화오션", en: "hanwha ocean", p: 28000 }, { c: "010140", n: "삼성중공업", en: "samsung heavy", p: 9500 }, { c: "010060", n: "OCI홀딩스", en: "oci", p: 98000 },
+            { c: "010120", n: "LS ELECTRIC", en: "ls electric", p: 165000 }, { c: "064350", n: "현대로템", en: "rotem", p: 38000 }, { c: "079550", n: "LIG넥스원", en: "lig", p: 145000 }, { c: "103140", n: "풍산", en: "poongsan", p: 55000 }, { c: "003230", n: "삼양식품", en: "samyang", p: 450000 },
+            { c: "005180", n: "빙그레", en: "binggrae", p: 65000 }, { c: "007310", n: "오뚜기", en: "ottogi", p: 380000 }, { c: "068760", n: "셀트리온제약", en: "celltrion pharm", p: 95000 }, { c: "277810", n: "레인보우로보틱스", en: "rainbow", p: 155000 }, { c: "112040", n: "위메이드", en: "wemade", p: 45000 },
+            { c: "078340", n: "컴투스", en: "com2us", p: 38000 }, { c: "067160", n: "SOOP", en: "soop", p: 110000 }, { c: "214150", n: "클래시스", en: "classys", p: 42000 }, { c: "036930", n: "주성엔지니어링", en: "jusung", p: 32000 }, { c: "039030", n: "이오테크닉스", en: "eo technics", p: 145000 },
+            { c: "005290", n: "동진쎄미켐", en: "dongjin", p: 42000 }, { c: "357780", n: "솔브레인", en: "solbrain", p: 280000 }, { c: "145020", n: "휴젤", en: "hugel", p: 210000 }, { c: "215600", n: "신라젠", en: "sillajen", p: 5500 }, { c: "067630", n: "HLB생명과학", en: "hlb life", p: 12000 },
+            // Added More (Total > 120)
+            { c: "047040", n: "대우건설", en: "daewoo eng", p: 4200 }, { c: "006360", n: "GS건설", en: "gs eng", p: 15000 }, { c: "375500", n: "DL이앤씨", en: "dl enc", p: 35000 }, { c: "023530", n: "롯데쇼핑", en: "lotte shop", p: 72000 }, { c: "004170", n: "신세계", en: "shinsegae", p: 170000 },
+            { c: "139480", n: "이마트", en: "emart", p: 75000 }, { c: "282330", n: "BGF리테일", en: "bgf", p: 130000 }, { c: "007070", n: "GS리테일", en: "gs retail", p: 22000 }, { c: "280360", n: "롯데웰푸드", en: "lotte food", p: 105000 }, { c: "001680", n: "대상", en: "daesang", p: 19000 },
+            { c: "069080", n: "웹젠", en: "webzen", p: 16000 }, { c: "095660", n: "네오위즈", en: "neowiz", p: 24000 }, { c: "225570", n: "넥슨게임즈", en: "nexon games", p: 14500 }, { c: "185750", n: "종근당", en: "ckd", p: 85000 }, { c: "069620", n: "대웅제약", en: "daewoong", p: 115000 },
+            { c: "006280", n: "GC녹십자", en: "gc", p: 120000 }, { c: "008930", n: "한미사이언스", en: "hanmi science", p: 38000 }, { c: "030000", n: "제일기획", en: "cheil", p: 19000 }, { c: "114090", n: "GKL", en: "gkl", p: 13000 }, { c: "034230", n: "파라다이스", en: "paradise", p: 14000 },
+            { c: "402340", n: "SK스퀘어", en: "sk square", p: 45000 }, { c: "383800", n: "LX홀딩스", en: "lx", p: 7500 }, { c: "180640", n: "한진칼", en: "hanjin kal", p: 65000 }, { c: "000120", n: "CJ대한통운", en: "cj logistics", p: 115000 }, { c: "000150", n: "두산", en: "doosan corp", p: 95000 },
+            { c: "003620", n: "KG모빌리티", en: "kg mobility", p: 8500 }, { c: "000080", n: "하이트진로", en: "hitejinro", p: 21000 }, { c: "004990", n: "롯데지주", en: "lotte hold", p: 28000 }, { c: "272450", n: "진에어", en: "jin air", p: 12500 }, { c: "091810", n: "티웨이항공", en: "tway", p: 2600 },
+            { c: "039490", n: "키움증권", en: "kiwoom", p: 98000 }, { c: "138930", n: "BNK금융지주", en: "bnk", p: 7200 }, { c: "139130", n: "DGB금융지주", en: "dgb", p: 8500 }, { c: "175330", n: "JB금융지주", en: "jb", p: 11500 }, { c: "004800", n: "효성", en: "hyosung", p: 58000 },
+            { c: "298020", n: "효성티앤씨", en: "hyosung tnc", p: 320000 }, { c: "298050", n: "효성첨단소재", en: "hyosung adv", p: 350000 }, { c: "298000", n: "효성화학", en: "hyosung chem", p: 95000 }, { c: "000670", n: "영풍", en: "youngpoong", p: 520000 }, { c: "010100", n: "한국무브넥스", en: "movenex", p: 5600 }
+        ];
+
+        // --- MINI GAMES (Arcade) ---
+        let TEMP_EARNINGS = 0;
+
+        function openGameModal() {
+            // Check Daily Reset
+            resetDailyGames();
+
+            // Reset Temp
+            TEMP_EARNINGS = 0;
+            document.getElementById('temp-earn-display').innerText = "0원";
+
+            // Update UI
+            document.getElementById('rps-cnt').innerText = (USER.mini ? USER.mini.r_cnt : 0);
+            document.getElementById('game-modal').classList.add('active');
+        }
+
+        function closeGameModal() {
+            document.getElementById('game-modal').classList.remove('active');
+            document.getElementById('rps-result').innerText = "란봇을 이겨보세요!";
+
+            // Apply Temp Earnings
+            if (TEMP_EARNINGS > 0) {
+                USER.cash = Number(USER.cash) + Number(TEMP_EARNINGS);
+                updateMyInfo();
+                saveGame();
+                alert(`알바비 정산 완료!\n+${fmt(TEMP_EARNINGS)}`);
+                TEMP_EARNINGS = 0;
+            }
+        }
+
+        function resetDailyGames() {
+            if (!USER.mini) USER.mini = { lastr: 0, r_cnt: 0 };
+
+            const now = new Date();
+            const today = now.toDateString(); // "Mon Dec 14 2025"
+            const last = USER.mini.lastr ? new Date(USER.mini.lastr).toDateString() : "";
+
+            if (today !== last) {
+                USER.mini.r_cnt = 0;
+                USER.mini.lastr = now.getTime();
+                saveGame();
+            }
+        }
+
+        function playClicker() {
+            // Accumulate Temp Earnings
+            TEMP_EARNINGS += 10;
+
+            // Update Modal UI
+            // Update Modal UI
+            document.getElementById('temp-earn-display').innerText = fmt(TEMP_EARNINGS);
+
+            // Visual Feedback & Anti-Macro (Random Position)
+            const btn = document.getElementById('btn-clicker');
+            // Random Jitter: +/- 40px X, +/- 20px Y
+            const rx = (Math.random() - 0.5) * 80;
+            const ry = (Math.random() - 0.5) * 40;
+
+            btn.innerText = "💰+10";
+            btn.style.transform = `translate(${rx}px, ${ry}px)`;
+
+            setTimeout(() => {
+                btn.innerText = "+10원";
+            }, 100);
+
+            // NO saveGame or updateMyInfo here!
+        }
+
+        function playRPS(userChoice) {
+            resetDailyGames();
+
+            if (USER.mini.r_cnt >= 5) {
+                alert('오늘의 가위바위보 횟수를 모두 소진했습니다.\n내일 다시 도전해주세요!');
+                return;
+            }
+
+            USER.mini.r_cnt++;
+            USER.mini.lastr = Date.now(); // Update timestamp
+
+            const choices = ['sc', 'ro', 'pa']; // Scissors, Rock, Paper
+            const bots = choices[Math.floor(Math.random() * 3)];
+
+            const map = { sc: '✌️', ro: '✊', pa: '✋' };
+            const resEl = document.getElementById('rps-result');
+
+            let result = ''; // win, lose, draw
+            let prize = 0;
+
+            if (userChoice === bots) {
+                result = 'draw';
+                prize = 10000;
+            } else if (
+                (userChoice === 'sc' && bots === 'pa') ||
+                (userChoice === 'ro' && bots === 'sc') ||
+                (userChoice === 'pa' && bots === 'ro')
+            ) {
+                result = 'win';
+                prize = 100000;
+            } else {
+                result = 'lose';
+                prize = 0;
+            }
+
+            // Messages
+            let msg = `나: ${map[userChoice]} vs 란봇: ${map[bots]} -> `;
+            if (result === 'win') {
+                msg += `<span style="color:var(--up-color);">승리! (+${fmt(prize)})</span>`;
+                USER.cash += prize;
+            } else if (result === 'draw') {
+                msg += `<span style="color:var(--text-main);">무승부 (+${fmt(prize)})</span>`;
+                USER.cash += prize;
+            } else {
+                msg += `<span style="color:var(--down-color);">패배...</span>`;
+            }
+
+            resEl.innerHTML = msg;
+            document.getElementById('rps-cnt').innerText = USER.mini.r_cnt;
+
+            updateMyInfo();
+            document.getElementById('d-cash').innerText = fmt(USER.cash);
+            saveGame();
+        }
+
+        // --- NICKNAME LOGIC ---
+        let MARKET = {};
+        let USER = { cash: 10000000, pf: {}, likes: [] };
+        let CUR_CODE = null;
+        let TRADE_QTY = 1;
+        // Increase history size for scrolling (300)
+        const HIST_SIZE = 1000;
+
+        // Market Cycle Globals
+        let MARKET_DAY = 1;         // Current simulated day
+        let DAY_TICK_COUNT = 0;     // Ticks passed in current day (Reset every 150)
+        let TICK_INTERVAL = 2000;   // 2s per tick
+
+        let SORT_MODE = 'pop'; // pop, rise, fall, vol, amt, name
+
+        // Trading Globals
+        // Trading Globals
+        let ORDER_PRICE = 0; // Current Target Price
+
+        // Difficulty: HIGH
+        const FEE_BUY_RATE = 0.005; // 0.5% (Was 0.015%)
+        const FEE_SELL_RATE = 0.01;  // 1.0% (Was 0.23%)
+
+        // Impact: Non-linear to punish whales
+        // 100M Trade -> ~5% Impact
+        function calcImpact(amt) {
+            const base = 100000000; // 100M
+            const ratio = amt / base;
+            // Power 1.2 makes it slightly convex
+            return Math.pow(ratio, 1.2) * 0.05;
+        }
+
+        window.onload = () => {
+            loadGame();
+            if (Object.keys(MARKET).length === 0) initMarket();
+
+            // Limit Order Init
+            if (!USER.orders) USER.orders = [];
+
+            // always init online
+            setTimeout(initOnline, 500);
+
+            // Migration: Sync MARKET with STOCK_DEFS
+            // 1. Add missing stocks
+            // 2. Add missing 'en' fields
+            STOCK_DEFS.forEach(s => {
+                if (!MARKET[s.c]) {
+                    // New stock found! Init it.
+                    const hist = [];
+                    let cur = s.p;
+                    for (let i = 0; i < HIST_SIZE; i++) {
+                        hist.unshift(cur);
+                        cur = cur * (1 - (Math.random() - 0.5) * 0.015);
+                    }
+                    MARKET[s.c] = {
+                        n: s.n,
+                        en: s.en,
+                        p: s.p,
+                        open: s.p, // Day Start Price
+                        base: s.p, // Initial Base
+                        hist: hist,
+                        vol: 0.005 + Math.random() * 0.015,
+                        v_qty: 0,
+                        v_amt: 0
+                    };
+                } else {
+                    // Existing stock, ensure 'en' is present
+                    if (!MARKET[s.c].en) MARKET[s.c].en = s.en;
+                    // Ensure 'open' is present
+                    if (!MARKET[s.c].open) MARKET[s.c].open = MARKET[s.c].p;
+                }
+            });
+
+            // PATCH: Ensure sufficient history for PC Scrolling
+            for (let c in MARKET) {
+                const s = MARKET[c];
+                if (!s.hist) s.hist = [s.p];
+                while (s.hist.length < 1000) {
+                    const first = s.hist[0];
+                    s.hist.unshift(first * (1 - (Math.random() - 0.5) * 0.015));
+                }
+            }
+
+            checkNickname();
+
+            // Initial Render
+            // Call render() directly. It wraps sub-renders in try-catch.
+            render();
+
+            setInterval(tick, 2000); // 2s Tick
+
+            setupSearch();
+            setupChartInteraction();
+        };
+
+        function initMarket() {
+            STOCK_DEFS.forEach(s => {
+                const hist = [];
+                let cur = s.p;
+                for (let i = 0; i < HIST_SIZE; i++) {
+                    hist.unshift(cur);
+                    cur = cur * (1 - (Math.random() - 0.5) * 0.015);
+                }
+
+                MARKET[s.c] = {
+                    n: s.n,
+                    en: s.en, // English Search Key
+                    p: s.p,
+                    open: s.p,
+                    base: s.p,
+                    hist: hist,
+                    vol: 0.005 + Math.random() * 0.015,
+                    v_qty: 0, // sim volume
+                    v_amt: 0  // sim amount
+                };
+            }); // End forEach
+
+            // Initial Save with TS
+            USER.ts = Date.now();
+            saveGame();
+        }
+
+        function loadGame() {
+            const u = localStorage.getItem('kr_user');
+            const m = localStorage.getItem('kr_market');
+            const r = localStorage.getItem('kr_rivals');
+
+            if (u) {
+                USER = JSON.parse(u);
+                if (!USER.likes) USER.likes = [];
+                if (!USER.pf) USER.pf = {}; // Critical Fix: Ensure pf exists
+                if (!USER.alias) USER.alias = '';
+            }
+            if (m) {
+                MARKET = JSON.parse(m);
+                // DATA REPAIR: Check for NaN/Infinity corruption
+                for (let k in MARKET) {
+                    const s = MARKET[k];
+                    if (!isFinite(s.p)) s.p = s.base || 1000;
+                    if (!isFinite(s.open)) s.open = s.base || 1000;
+                    if (!Array.isArray(s.hist)) s.hist = [s.p];
+                    // Fix Hist
+                    s.hist = s.hist.map(v => isFinite(v) ? v : s.p);
+                    // Ensure Hist matches p
+                    if (s.hist.length > 0 && Math.abs(s.hist[0] - s.p) > 0.01) {
+                        s.hist[0] = s.p;
+                    }
+                }
+            }
+            if (r) RIVALS = JSON.parse(r);
+
+            // OFFLINE SIMULATION
+            if (USER.ts) {
+                const now = Date.now();
+                const diff = now - USER.ts;
+                // 1 Tick = 2000ms
+                let ticks = Math.floor(diff / 2000);
+                // Limit to max 500 ticks (approx 16 mins) to prevent freeze
+                // Or if user wants "Real" simulation, we can do more but optimized.
+                // Js is fast. 5000 iterations is nothing. Let's allowing up to 1000.
+                if (ticks > 1000) ticks = 1000;
+
+                if (ticks > 0) {
+                    console.log(`Running Offline Sim: ${ticks} ticks`);
+                    for (let i = 0; i < ticks; i++) {
+                        updateMarketLogic();
+                    }
+                }
+            }
+
+            // Theme Logic
+            if (localStorage.getItem('kr_theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                const btn = document.getElementById('theme-btn');
+                if (btn) btn.innerHTML = '<span class="material-symbols-rounded">light_mode</span>';
+            }
+        }
+
+        function saveGame(forceCloud = false) {
+            try {
+                USER.ts = Date.now();
+                const uStr = JSON.stringify(USER);
+
+                // STORAGE OPTIMIZATION: Truncate history for LocalStorage to prevent Quota Exceeded
+                // We keep full history in memory (MARKET) for the chart, but only save recent 1000 points to disk.
+                const storageMarket = {};
+                for (let c in MARKET) {
+                    const s = MARKET[c];
+                    storageMarket[c] = { ...s }; // Shallow copy
+                    // Truncate Hist if too long
+                    if (s.hist && s.hist.length > HIST_SIZE) {
+                        storageMarket[c].hist = s.hist.slice(0, HIST_SIZE);
+                    }
+                }
+                const mStr = JSON.stringify(storageMarket);
+
+                localStorage.setItem('kr_user', uStr);
+                localStorage.setItem('kr_market', mStr);
+            } catch (e) {
+                console.error("Local Save Failed (Quota?):", e);
+                // If quota exceeded, we might want to alert once or just ignore to keep game running
+            }
+
+            // Cloud Save Debounced
+            if (forceCloud || (auth && auth.currentUser && !auth.currentUser.isAnonymous && Math.random() < 0.2)) {
+                // COMPRESSION: Reduce Market Size (Truncate Hist)
+                // We create a "Cloud Market" object
+                const cloudMarket = {};
+                for (let c in MARKET) {
+                    const s = MARKET[c];
+                    cloudMarket[c] = { ...s }; // Shallow copy
+                    // Keep only last 300 points (approx 2.4KB * 18 = 43KB + overhead)
+                    // Original is 1000 points.
+                    // History is stored [newest, ..., oldest] due to initMarket's unshift.
+                    // So we want the first 300 elements.
+                    if (s.hist && s.hist.length > 300) {
+                        cloudMarket[c].hist = s.hist.slice(0, 300);
+                    }
+                }
+                const cmStr = JSON.stringify(cloudMarket);
+
+                if (db && auth.currentUser) {
+                    db.collection('users').doc(auth.currentUser.uid).set({
+                        user: JSON.stringify(USER),
+                        market: cmStr, // Save Compressed
+                        ts: Date.now(),
+                        email: auth.currentUser.email
+                    }, { merge: true })
+                        .then(() => { if (forceCloud) console.log("Cloud Saved"); })
+                        .catch(err => {
+                            console.error("Cloud Save Fail", err);
+                            if (forceCloud) alert("저장 실패: " + err.message);
+                        });
+                }
+            }
+        }
+
+        function tick() {
+            // Day Cycle Logic
+            DAY_TICK_COUNT++;
+            if (DAY_TICK_COUNT >= 150) {
+                DAY_TICK_COUNT = 0;
+                MARKET_DAY++;
+                for (let c in MARKET) MARKET[c].open = MARKET[c].p;
+            }
+            try { checkPendingOrders(); } catch (e) { console.error("checkPendingOrders error:", e); }
+            try { updateMarketLogic(); } catch (e) { console.error("updateMarketLogic error:", e); }
+            if (Math.random() < 0.1) {
+                try { syncMyScore(); } catch (e) { console.error("syncMyScore error:", e); }
+            }
+
+            saveGame();
+            render();
+            if (CUR_CODE) {
+                updateModal();
+                if (!document.getElementById('m-market-check').checked) {
+                    // Only update order book if not market price mode? Or logic allows orderbook update.
+                }
+                const s = MARKET[CUR_CODE];
+                renderOrderBook(s);
+            }
+        }
+
+        function updateMarketLogic() {
+            // 1. Update Global Market Trend (Slowly drifting)
+            if (Math.random() < 0.1) {
+                MARKET_TREND += (Math.random() - 0.5) * 0.15;
+                // Clamp Trend
+                if (MARKET_TREND > 1) MARKET_TREND = 1;
+                if (MARKET_TREND < -1) MARKET_TREND = -1;
+            }
+
+            for (let c in MARKET) {
+                const stock = MARKET[c];
+
+                // Init new properties if missing
+                if (stock.mom === undefined) stock.mom = 0;
+                if (stock.beta === undefined) stock.beta = 0.5 + Math.random(); // 0.5 ~ 1.5
+
+                // Components of Move
+                // 1. Market Effect (Beta * Trend)
+                const marketEffect = MARKET_TREND * 0.002 * stock.beta;
+
+                // 2. Momentum Effect (Continuation)
+                const momentumEffect = stock.mom * 0.15;
+
+                // 3. Volatility/Noise
+                const vol = stock.vol * (1 + Math.abs(MARKET_TREND) * 0.5); // Highet vol during strong trends
+                const noise = (Math.random() - 0.5) * 2 * vol;
+
+                // 4. Mean Reversion (Pull back to moving average approx)
+                // Just use simple reversion to Open for stability if too far
+                let regression = 0;
+                const dist = (stock.p - stock.open) / stock.open;
+                if (Math.abs(dist) > 0.20) {
+                    regression = -dist * 0.02; // Strong pull back if > 20%
+                }
+
+                // 5. Shock Event (News)
+                let shock = 0;
+                if (Math.random() < 0.0005) { // 0.05% chance per tick
+                    shock = (Math.random() - 0.5) * 0.3; // +/- 15% instant shock
+                    console.log(`[NEWS] ${stock.n} SHOCK: ${(shock * 100).toFixed(1)}%`);
+                }
+
+                const totalMove = marketEffect + momentumEffect + noise + regression + shock;
+
+                // Calculate Next Price
+                let next = stock.p * (1 + totalMove);
+
+                // Update Momentum
+                stock.mom = (stock.mom * 0.9) + (totalMove * 0.1);
+
+                // Hard Limits (Sanghan/Hahan)
+                const limitUp = stock.open * 1.30;
+                const limitDown = stock.open * 0.70;
+                if (next > limitUp) next = limitUp;
+                if (next < limitDown) next = limitDown;
+
+                // Anti-NaN Safety
+                if (isNaN(next) || !isFinite(next)) next = stock.open;
+
+                stock.p = next;
+                stock.hist.unshift(next);
+                // if (stock.hist.length > HIST_SIZE) stock.hist.pop();
+
+                // Fake Volume
+                const tradeVol = Math.floor(Math.random() * 1000 * (stock.vol * 100 * (1 + Math.abs(totalMove) * 100)));
+                stock.v_qty += tradeVol;
+                stock.v_amt += tradeVol * stock.p;
+            }
+        }
+
+        // --- MARKET CHECK ---
+        function toggleMarketPrice() {
+            const chk = document.getElementById('m-market-check');
+            const inp = document.getElementById('m-price-input');
+            if (chk.checked) {
+                inp.disabled = true;
+                inp.value = MARKET[CUR_CODE].p;
+                inp.style.opacity = '0.5';
+            } else {
+                inp.disabled = false;
+                inp.style.opacity = '1';
+                ORDER_PRICE = parseInt(inp.value) || MARKET[CUR_CODE].p;
+            }
+        }
+
+        // --- TRADINGVIEW CONTEXT ---
+        let tvChart = null;
+        let tvCandleSeries = null;
+        let tvVolumeSeries = null;
+        let tvMaSeries = null;
+
+        function toggleChartMode() {
+            const isTv = document.getElementById('tv-chart-check').checked;
+            const cvsArea = document.getElementById('chart-scroll');
+            const tvArea = document.getElementById('tv-chart-area');
+
+            if (isTv) {
+                cvsArea.style.display = 'none';
+                tvArea.style.display = 'block';
+                // Initialize if first time
+                if (!tvChart) initTVChart();
+                // Render if we have code
+                if (CUR_CODE && MARKET[CUR_CODE]) {
+                    renderTVChart(MARKET[CUR_CODE]);
+                    // Force resize/fit after render
+                    setTimeout(() => {
+                        if (tvChart) tvChart.timeScale().fitContent();
+                    }, 50);
+                }
+            } else {
+                cvsArea.style.display = 'block';
+                tvArea.style.display = 'none';
+            }
+        }
+
+        function initTVChart() {
+            try {
+                const container = document.getElementById('tv-chart-area');
+                const chartOptions = {
+                    layout: {
+                        textColor: '#d1d5db',
+                        background: { type: 'solid', color: '#1e293b' }
+                    },
+                    grid: {
+                        vertLines: { color: '#334155' },
+                        horzLines: { color: '#334155' }
+                    },
+                    timeScale: {
+                        timeVisible: true,
+                        secondsVisible: true,
+                        tickMarkFormatter: (time, tickMarkType, locale) => {
+                            return new Date(time * 1000).toLocaleTimeString('ko-KR', {
+                                hour: '2-digit', minute: '2-digit', hour12: false,
+                                timeZone: 'Asia/Seoul'
+                            });
+                        }
+                    },
+                    localization: {
+                        locale: 'ko-KR',
+                        dateFormat: 'yyyy/MM/dd',
+                        timeFormatter: (timestamp) => {
+                            return new Date(timestamp * 1000).toLocaleTimeString('ko-KR', {
+                                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                                timeZone: 'Asia/Seoul'
+                            });
+                        }
+                    }
+                };
+
+                // Check library
+                if (!window.LightweightCharts) {
+                    alert("차트 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.");
+                    return;
+                }
+
+                tvChart = LightweightCharts.createChart(container, chartOptions);
+
+                // 1. Volume Series (Bottom Overlay)
+                tvVolumeSeries = tvChart.addHistogramSeries({
+                    priceFormat: { type: 'volume' },
+                    priceScaleId: '', // Overlay
+                    scaleMargins: { top: 0.8, bottom: 0 },
+                });
+
+                // 2. Candlestick Series (Main)
+                tvCandleSeries = tvChart.addCandlestickSeries({
+                    upColor: '#ef4444',
+                    downColor: '#3b82f6',
+                    borderVisible: false,
+                    wickUpColor: '#ef4444',
+                    wickDownColor: '#3b82f6',
+                });
+
+                // 3. MA Series (20-tick MA)
+                tvMaSeries = tvChart.addLineSeries({
+                    color: '#f59e0b', // Amber/Yellow
+                    lineWidth: 1,
+                    crosshairMarkerVisible: false,
+                });
+
+                // Handle Resize
+                new ResizeObserver(entries => {
+                    if (entries.length === 0 || entries[0].target !== container) { return; }
+                    const newRect = entries[0].contentRect;
+                    tvChart.applyOptions({ height: newRect.height, width: newRect.width });
+                }).observe(container);
+
+            } catch (e) {
+                console.error("Init Error:", e);
+            }
+        }
+
+        function renderTVChart(s) {
+            if (!tvChart || !tvCandleSeries) return;
+
+            // Generate synthetic OHLC + Valid Time
+            const candleData = [];
+            const volumeData = [];
+            const maData = [];
+
+            const len = s.hist.length;
+            const now = Math.floor(Date.now() / 1000);
+
+            // Temporary Logic for MA calculation
+            let sum = 0;
+            const period = 20;
+            const historyValues = []; // To track for MA
+
+            // Iterate oldest to newest
+            for (let i = len - 1; i >= 0; i--) {
+                const close = Number(s.hist[i]);
+                if (isNaN(close)) continue;
+
+                // Synthetic Open: Use previous close (or same if first point)
+                // Note: s.hist is reverse (0 is Newest). So previous in time is i+1.
+                let open = (i === len - 1) ? close : Number(s.hist[i + 1]);
+                if (isNaN(open)) open = close;
+
+                // Synthetic High/Low (Simulated Volatility)
+                // Use a deterministic pseudo-random based on price/time to keep repaints stable? 
+                // Or just simple math: High is max(O,C) + small noise, Low is min(O,C) - small noise.
+                // We use 0.5% volatility for wicks
+                const volatility = close * 0.005;
+                const high = Math.max(open, close) + (volatility * 0.5); // Small upper wick
+                const low = Math.min(open, close) - (volatility * 0.5);  // Small lower wick
+
+                const time = now - (i * 2);
+
+                candleData.push({ time, open, high, low, close });
+
+                // Volume (Randomized based on price change or just simulated)
+                // Color: Red if Open < Close (Up), Blue if Open > Close (Down).
+                // Wait, KR: Up = Red (Close > Open). Down = Blue (Close < Open).
+                const isUp = close >= open;
+                const volColor = isUp ? 'rgba(239, 68, 68, 0.5)' : 'rgba(59, 130, 246, 0.5)';
+                const volVal = Math.floor(s.vol * (0.5 + Math.random())); // Use stock generic volume base
+                volumeData.push({ time, value: volVal, color: volColor });
+
+                // MA Calculation
+                historyValues.push(close);
+                sum += close;
+                if (historyValues.length > period) {
+                    sum -= historyValues.shift();
+                }
+                if (historyValues.length >= period) {
+                    maData.push({ time, value: sum / period });
+                }
+            }
+
+            if (candleData.length === 0) return;
+
+            try {
+                tvCandleSeries.setData(candleData);
+                tvVolumeSeries.setData(volumeData);
+                tvMaSeries.setData(maData);
+
+                // Fit Content
+                // tvChart.timeScale().fitContent(); 
+                // Don't fit every tick, annoying. Fit only if needed or first load?
+                // Let's rely on default scrolling or fit once.
+                // tvChart.timeScale().fitContent(); 
+            } catch (e) {
+                console.error("Chart Render Error:", e);
+            }
+        }
+
+        // --- RENDER ---
+        function render() {
+            try { updateMyInfo(); } catch (e) { console.error("updateMyInfo error:", e); }
+            try { renderMyStocks(); } catch (e) { console.error("renderMyStocks error:", e); }
+            try { renderWatchlist(); } catch (e) { console.error("renderWatchlist error:", e); }
+            try { renderPendingOrders(); } catch (e) { console.error("renderPendingOrders error:", e); }
+            try { renderMarket(); } catch (e) { console.error("renderMarket error:", e); }
+        }
+
+        function updateMyInfo() {
+            let evalTotal = 0;
+            let profitTotal = 0;
+
+            for (let c in USER.pf) {
+                const h = USER.pf[c];
+                if (!MARKET[c]) continue;
+                const cur = MARKET[c].p;
+                evalTotal += h.qty * cur;
+                profitTotal += (cur - h.avg) * h.qty;
+            }
+
+            const totalAsset = USER.cash + evalTotal;
+            document.getElementById('d-total').innerText = fmt(totalAsset);
+            document.getElementById('d-cash').innerText = fmt(USER.cash);
+
+            const pEl = document.getElementById('d-profit');
+            pEl.innerText = `${profitTotal > 0 ? '+' : ''}${fmt(profitTotal)}`;
+            pEl.style.color = profitTotal > 0 ? 'var(--up-color)' : (profitTotal < 0 ? 'var(--down-color)' : 'var(--text-main)');
+        }
+
+        function renderMyStocks() {
+            const list = document.getElementById('my-stock-list');
+            const sec = document.getElementById('my-stock-section');
+            const sorted = Object.keys(USER.pf).sort();
+
+            if (sorted.length === 0) {
+                sec.style.display = 'none';
+                return;
+            }
+            sec.style.display = 'block';
+            document.getElementById('my-count').innerText = `${sorted.length}종목`;
+
+            list.innerHTML = '';
+            sorted.forEach(c => {
+                // If stored pf has stock not in market (unlikely but safe check)
+                if (!MARKET[c]) return;
+
+                const s = MARKET[c];
+                const h = USER.pf[c];
+                const val = s.p * h.qty;
+                const gain = (s.p - h.avg) * h.qty;
+                const gainPct = ((s.p - h.avg) / h.avg) * 100;
+
+                const d = makeStockItem(c, s, `${gain >= 0 ? '+' : ''}${gainPct.toFixed(1)}% (${gain >= 0 ? '+' : ''}${fmt(gain)})`, val, gain >= 0 ? 'var(--up-color)' : 'var(--down-color)', false, h.avg);
+                list.appendChild(d);
+            });
+        }
+
+        function renderWatchlist() {
+            const list = document.getElementById('watch-list');
+            const sec = document.getElementById('watch-section');
+            if (USER.likes.length === 0) {
+                sec.style.display = 'none';
+                return;
+            }
+            sec.style.display = 'block';
+            list.innerHTML = '';
+
+            USER.likes.forEach(c => {
+                if (!MARKET[c]) return;
+                const s = MARKET[c];
+                const chg = ((s.p - s.base) / s.base) * 100;
+                const chgStr = `${chg > 0 ? '+' : ''}${chg.toFixed(2)}%`;
+                const color = chg > 0 ? 'var(--up-color)' : (chg < 0 ? 'var(--down-color)' : 'var(--text-sub)');
+
+                const d = makeStockItem(c, s, chgStr, s.p, color);
+                list.appendChild(d);
+            });
+        }
+
+        function renderMarket() {
+            const list = document.getElementById('market-list');
+            const sq = document.getElementById('k-search').value.toLowerCase().trim();
+            list.innerHTML = '';
+
+            // Generate Array
+            let arr = Object.keys(MARKET).map(c => ({ c: c, ...MARKET[c] }));
+
+            // Sort
+            if (SORT_MODE === 'rise') arr.sort((a, b) => ((b.p - b.base) / b.base) - ((a.p - a.base) / a.base));
+            else if (SORT_MODE === 'fall') arr.sort((a, b) => ((a.p - a.base) / a.base) - ((b.p - b.base) / b.base));
+            else if (SORT_MODE === 'vol') arr.sort((a, b) => b.v_qty - a.v_qty);
+            else if (SORT_MODE === 'amt') arr.sort((a, b) => b.v_amt - a.v_amt);
+            else if (SORT_MODE === 'name') arr.sort((a, b) => a.n.localeCompare(b.n));
+            // pop = default order (as initialized in STOCK_DEFS roughly by cap)
+
+            let count = 0;
+
+            arr.forEach(s => {
+                // Case-insensitive search on Name as well
+                if (sq) {
+                    const matchName = s.n.toLowerCase().includes(sq);
+                    const matchCode = s.c.includes(sq);
+                    const matchEn = s.en && s.en.includes(sq);
+                    if (!matchName && !matchCode && !matchEn) return;
+                }
+
+                count++;
+                if (count > 200 && !sq) return;
+
+                const chg = ((s.p - s.base) / s.base) * 100;
+                const chgStr = `${chg > 0 ? '+' : ''}${chg.toFixed(2)}%`;
+                const color = chg > 0 ? 'var(--up-color)' : (chg < 0 ? 'var(--down-color)' : 'var(--text-main)');
+
+                const d = makeStockItem(s.c, s, chgStr, s.p, color, true); // true = show chip
+                list.appendChild(d);
+            });
+
+            document.getElementById('empty-msg').style.display = count === 0 ? 'block' : 'none';
+            updateSortChips();
+        }
+
+        function makeStockItem(c, s, rightTop, rightBot, color, showChangeTag = false, avgPrice = null) {
+            const d = document.createElement('div');
+            d.className = 's-item';
+
+            // Heart click logic
+            const isLiked = USER.likes.includes(c);
+
+            d.innerHTML = `
+                <div class="s-left" onclick="openModal('${c}')" style="flex:1;">
+                    <div style="font-size:15px; font-weight:700;">${s.n}</div>
+                    <div style="font-size:12px; color:var(--text-sub);">${c}</div>
+                </div>
+                <div class="s-right" onclick="openModal('${c}')" style="margin-right:12px;">
+                    <div class="s-price" style="color:${showChangeTag ? 'var(--text-main)' : 'var(--text-main)'}">${typeof rightBot === 'number' ? fmt(rightBot) : rightBot}</div>
+                    ${showChangeTag
+                    ? `<div class="${color.includes('up') ? 'tag-up' : (color.includes('down') ? 'tag-down' : 'tag-flat')}">${rightTop}</div>`
+                    : `<div style="font-size:12px; color:${color}">${rightTop}</div>`
+                }
+                    ${rightBot && typeof rightBot !== 'string' && avgPrice ? `
+                        <div style="font-size:11px; color:var(--text-sub); text-align:right; margin-top:2px;">
+                            현재 <span style="color:var(--text-main); font-weight:600;">${fmt(s.p)}</span> | 평단 ${fmt(avgPrice)}
+                        </div>
+                    ` : ''}
+                </div>
+                <div onclick="event.stopPropagation(); toggleLike('${c}')" style="padding:4px; cursor:pointer; color:${isLiked ? '#ef4444' : 'var(--text-sub)'}; display:flex;">
+                   <span class="material-symbols-rounded" style="font-size:22px;">${isLiked ? 'favorite' : 'favorite_border'}</span>
+                </div>
+            `;
+            return d;
+        }
+
+        // --- ONLINE LEADERBOARD (Firebase) ---
+        // [IMPORTANT] Replace this config with your own from Firebase Console!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAclshYalakwGjERwr9DRXUY2RIX0EqV-s",
+            authDomain: "stock-ranking-15c25.firebaseapp.com",
+            projectId: "stock-ranking-15c25",
+            storageBucket: "stock-ranking-15c25.firebasestorage.app",
+            messagingSenderId: "170157369706",
+            appId: "1:170157369706:web:01dfb897a55d47bf139d13",
+            measurementId: "G-V7DB52X8BE"
+        };
+
+        // Modules (loaded via CDN below)
+        let db, auth;
+        let myUid = null;
+        let onlineRivals = [];
+        let MY_SESSION_ID = 'Sess_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        let sessionListenerUnsubscribe = null;
+
+        function initOnline() {
+            // Import Firebase (ES Module shim via global for simple HTML)
+            // In a real module env, we'd import. Here we rely on script tags below.
+            if (typeof firebase === 'undefined') {
+                console.error("Firebase SDK not loaded");
+                return;
+            }
+
+            // 1. Init
+            // Prevent double init if re-run
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+
+            db = firebase.firestore();
+            auth = firebase.auth();
+
+            // 2. Auth State Listener
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    myUid = user.uid;
+                    console.log("User:", myUid, "Anon:", user.isAnonymous);
+
+                    updateUserUI(user);
+
+                    // Re-init Chat to apply correct 'isMe' styling for past messages
+                    // (Clear list and restart listener)
+                    document.getElementById('chat-list').innerHTML = '<div style="text-align:center; color:var(--text-sub); margin-top:20px;">채팅 불러오는 중...</div>';
+                    initChat();
+
+                    // Synce Session ID (Anti-Duplicate Login)
+                    if (!user.isAnonymous) {
+                        // 1. Write My Session ID
+                        db.collection('users').doc(myUid).set({
+                            session_id: MY_SESSION_ID,
+                            ts: Date.now() // Also acts as "Online" heartbeat
+                        }, { merge: true }).then(() => {
+                            // 2. Listen for Session ID changes (Kicked by other device)
+                            // ONLY START LISTENING AFTER WE WROTE OUR ID!
+                            if (sessionListenerUnsubscribe) sessionListenerUnsubscribe(); // Clear old
+                            sessionListenerUnsubscribe = db.collection('users').doc(myUid).onSnapshot(doc => {
+                                if (doc.exists) {
+                                    const data = doc.data();
+                                    // Verify it's not our own write (although local write updates immediately)
+                                    // If remote updates session_id to something else -> KICK.
+                                    if (data.session_id && data.session_id !== MY_SESSION_ID) {
+                                        console.log("Session Mismatch detected. Verifying...", MY_SESSION_ID, "vs", data.session_id);
+
+                                        // DOUBLE CHECK: Wait 1.5s and check again to confirm it's not a transient state
+                                        setTimeout(() => {
+                                            db.collection('users').doc(myUid).get().then(latestDoc => {
+                                                if (latestDoc.exists) {
+                                                    const latest = latestDoc.data();
+                                                    if (latest.session_id && latest.session_id !== MY_SESSION_ID) {
+                                                        // Confirmed Mismatch
+                                                        console.log("Confirmed Kick. Bye.");
+                                                        if (sessionListenerUnsubscribe) sessionListenerUnsubscribe();
+                                                        auth.signOut().then(() => {
+                                                            alert('다른 기기에서 접속하여 연결이 종료되었습니다.');
+                                                            location.reload();
+                                                        });
+                                                    } else {
+                                                        console.log("False Alarm. Session matches now.");
+                                                    }
+                                                }
+                                            });
+                                        }, 1500);
+                                    }
+                                }
+                            });
+                        });
+                    }
+
+                    // Sync Initial
+                    initChat();
+                    listenLeaderboard();
+                    // Sync Initial
+                    initChat();
+                    listenLeaderboard();
+                    // syncMyScore(); // REMOVED: DANGEROUS. Overwrites Ranking with Guest Data before Cloud Load.
+
+                    // REMOVED: Premature Nickname Check
+                    // checkDuplicateNickname checks Guest Nick vs User DB before Cloud Load.
+                    // This creates a conflict if Guest Nick is taken.
+                    // We rely on loadFromCloud or manual setNickname.
+
+                    // Cloud Load
+                    if (!user.isAnonymous) {
+                        loadFromCloud(user.uid);
+                    }
+
+                    // Init Mailbox (Admin Messages)
+                    initMail(user.uid);
+                } else {
+                    // Sign in Anon if no user
+                    if (sessionListenerUnsubscribe) sessionListenerUnsubscribe();
+                    auth.signInAnonymously().catch(e => console.error(e));
+                }
+            });
+        }
+
+        // Strict Nickname Check on Startup
+        async function checkDuplicateNickname(nick, uid) {
+            if (!nick || !db) return;
+            try {
+                const snapshot = await db.collection('ranking')
+                    .where('nick', '==', nick)
+                    .where('valid', '==', true)
+                    .get();
+
+                let isTaken = false;
+                snapshot.forEach(doc => {
+                    if (doc.id !== uid) isTaken = true;
+                });
+
+                if (isTaken) {
+                    alert('중복된 닉네임이 감지되었습니다.\n새로운 닉네임을 설정해주세요.');
+                    USER.alias = ''; // Clear to force reset
+                    saveGame();
+                    document.getElementById('nick-modal').classList.add('active');
+                    // Prevent closing
+                    document.querySelector('#nick-modal .btn:first-child').style.display = 'none'; // Hide Cancel
+                }
+            } catch (e) {
+                console.error("Nick Check Error", e);
+            }
+        }
+
+        function updateUserUI(user) {
+            const btn = document.getElementById('btn-login');
+            const prof = document.getElementById('user-profile');
+            const img = document.getElementById('user-img');
+
+            if (user.isAnonymous) {
+                btn.style.display = 'block';
+                prof.style.display = 'none';
+            } else {
+                btn.style.display = 'none';
+                prof.style.display = 'flex';
+                // Use Gravatar usually, or simple placeholder
+                img.src = user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`;
+
+                // Close modal if open
+                // Close modal if open
+                document.getElementById('login-modal').classList.remove('active');
+
+                // Admin Check
+                if (user.email === 'admin@ranbot.com') {
+                    document.getElementById('admin-btn').style.display = 'block';
+                }
+            }
+        }
+
+        function openProfileModal() {
+            const user = auth.currentUser;
+            if (!user) return;
+            document.getElementById('pf-email').innerText = user.email || '익명';
+            document.getElementById('pf-email').innerText = user.email || '익명';
+            // document.getElementById('pf-uid').innerText = user.uid; // Removed for Privacy
+            document.getElementById('profile-modal').classList.add('active');
+        }
+
+        function manualCloudSave() {
+            if (confirm('현재 기기의 데이터를 클라우드에 덮어씌우시겠습니까?')) {
+                saveGame(true);
+                alert('저장 요청을 보냈습니다.');
+            }
+        }
+
+        function manualCloudLoad() {
+            const user = auth.currentUser;
+            if (user) loadFromCloud(user.uid, true);
+        }
+
+        function openLoginModal() {
+            document.getElementById('login-modal').classList.add('active');
+        }
+
+        function processEmailAuth(mode) {
+            const email = document.getElementById('login-email').value;
+            const pw = document.getElementById('login-pw').value;
+
+            if (!email || !pw) {
+                alert('이메일과 비밀번호를 입력해주세요.');
+                return;
+            }
+            if (pw.length < 6) {
+                alert('비밀번호는 6자리 이상이어야 합니다.');
+                return;
+            }
+
+            if (mode === 'signup') {
+                // Determine: Link or Create?
+                // If current user is Anon, try LINK first.
+                // If Auth is null, Create.
+                const cur = auth.currentUser;
+                if (cur && cur.isAnonymous) {
+                    const credential = firebase.auth.EmailAuthProvider.credential(email, pw);
+                    cur.linkWithCredential(credential).then((usercred) => {
+                        alert('계정이 연동되었습니다! (' + email + ')');
+                        saveGame(true); // Force Save
+                    }).catch((error) => {
+                        console.log("Link Failed", error);
+                        // Fallback: If Link fails (e.g. security policy), try Create New + Migrate Data
+                        if (confirm('계정 연동 중 보안 이슈가 발생했습니다. (Firebase 정책)\n새 계정을 생성하고 데이터를 이사하시겠습니까?')) {
+                            auth.createUserWithEmailAndPassword(email, pw).then((usercred) => {
+                                // New User Created & Signed In automatically
+                                // USER variable still holds the Guest data!
+                                // Just save it to the new UID.
+                                USER.alias = usercred.user.displayName || USER.alias; // Optional
+                                saveGame(true); // SAVE GUEST DATA TO NEW UID
+                                alert('가입 및 데이터 이사가 완료되었습니다!');
+                                document.getElementById('login-modal').classList.remove('active');
+                            }).catch((createErr) => {
+                                if (createErr.code === 'auth/email-already-in-use') {
+                                    alert('이미 가입된 이메일입니다. "로그인"을 시도해주세요.');
+                                } else {
+                                    alert('가입 오류: ' + createErr.message);
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    // Just create (shouldn't happen if logic flows right, but good fallback)
+                    auth.createUserWithEmailAndPassword(email, pw).then((usercred) => {
+                        alert('가입되었습니다.');
+                        saveGame(true);
+                    }).catch((error) => {
+                        alert('가입 오류: ' + error.message);
+                    });
+                }
+            } else {
+                // LOGIN
+                if (confirm('로그인하면 현재 게스트 데이터는 사라지고 저장된 데이터가 로드됩니다.\n진행하시겠습니까?')) {
+                    auth.signInWithEmailAndPassword(email, pw).then((usercred) => {
+                        // Success -> onAuthStateChanged -> loadFromCloud
+                        alert('로그인 성공!');
+                    }).catch((error) => {
+                        alert('로그인 실패: ' + error.message);
+                    });
+                }
+            }
+        }
+
+        async function loadFromCloud(uid, manual = false) {
+            try {
+                // Fetch BOTH Save Data and Ranking Data (Identity source of truth)
+                const [doc, rankDoc] = await Promise.all([
+                    db.collection('users').doc(uid).get(),
+                    db.collection('ranking').doc(uid).get()
+                ]);
+
+                // 1. Identity/Nickname Recovery (Priority: Ranking > Google > SaveFile)
+                // If Ranking has a nickname, it is the 'Public' face. We trust it.
+                if (rankDoc.exists) {
+                    const rankData = rankDoc.data();
+                    if (rankData.nick && rankData.nick !== USER.alias) {
+                        console.log(`Nickname Synced from Ranking: ${USER.alias} -> ${rankData.nick}`);
+                        USER.alias = rankData.nick;
+                        // Force save locally immediately to prevent revert
+                        saveGame(true);
+                        // Update UI immediately
+                        checkNickname();
+                    }
+                }
+
+                // 2. Save File / Asset Recovery
+                if (doc.exists) {
+                    const data = doc.data();
+                    const localTS = USER.ts || 0;
+                    const cloudTS = data.ts || 0;
+
+                    let cloudUser = null;
+                    if (data.user) cloudUser = JSON.parse(data.user);
+
+                    // If we just synced the nickname from ranking, update the cloudUser object too so we don't prompt "Confirm Nickname Change" unnecessarily?
+                    // Actually, if cloudUser.alias is OLD ('SeolSeol'), and USER.alias is NEW ('Goodbye' from Ranking),
+                    // mismatch logic might trigger.
+
+                    const newer = cloudTS > localTS;
+
+                    // Manual Load: Always Ask
+                    if (manual) {
+                        const msg = `클라우드 데이터 발견!\n\n[클라우드]\n닉네임: ${cloudUser ? cloudUser.alias : '??'}\n시간: ${new Date(cloudTS).toLocaleString()}\n\n[현재 기기]\n닉네임: ${USER.alias}\n\n데이터를 불러오시겠습니까?`;
+                        if (confirm(msg)) {
+                            applyCloudData(uid, data, cloudUser);
+                        }
+                    }
+                    // Auto Login: STRICT MODE
+                    else {
+                        // Prevent Infinite Loop:
+                        if (USER.ownerId === uid) {
+                            // Already synced.
+                            return;
+                        }
+
+                        // If cloud data exists, we MUST load it.
+                        // But wait! If we successfully recovered the Nickname from Ranking, maybe the user Is Happy?
+                        // BUT, we still need to load ASSETS (Money, Stocks).
+                        // If Cloud Save has 'SeolSeol' and 0 money, but Ranking has 'Goodbye' and 1B money...
+                        // Wait. Ranking has 'asset' too.
+                        // But `applyCloudData` uses `data.user` (Save File).
+
+                        // IF Save File is corrupted (Guest Data overwritten), we might be loading bad data.
+                        // But we can't assume.
+                        // We proceed with loading -> Logic prompts user.
+
+                        const cloudNick = cloudUser ? cloudUser.alias : '??';
+                        const msg = `[데이터 보호 정책]\n해당 계정에는 이미 저장된 게임 데이터가 있습니다.\n\n[클라우드]\n닉네임: ${cloudNick}\n자산: ${cloudUser ? fmt(calcVal(cloudUser)) : '?'}\n\n이 계정으로 플레이하려면 클라우드 데이터를 불러와야 합니다.\n(취소 시 로그아웃되며, 현재 게스트 데이터는 유지됩니다.)`;
+
+                        if (confirm(msg)) {
+                            applyCloudData(uid, data, cloudUser);
+                        } else {
+                            // Refused
+                            alert('클라우드 연동을 취소하여 로그아웃합니다.\n현재 게스트 데이터로 플레이하려면\n새로운 계정으로 회원가입해주세요.');
+                            auth.signOut().then(() => {
+                                location.reload();
+                            });
+                        }
+                    }
+                } else {
+                    if (manual) alert('클라우드에 저장된 데이터가 없습니다.');
+                    // First time cloud user? Push local data. Mark ownership.
+                    else {
+                        USER.ownerId = uid;
+                        saveGame(true);
+                    }
+                }
+            } catch (e) {
+                console.error("Cloud Error", e);
+                alert('클라우드 데이터를 불러오는 중 오류가 발생했습니다.\n' + e.message);
+            }
+        }
+
+        function applyCloudData(uid, data, cloudUser) {
+            if (data.user) USER = cloudUser;
+            if (data.market) {
+                MARKET = JSON.parse(data.market);
+                // HYDRATE: Decompress history
+                for (let c in MARKET) {
+                    const s = MARKET[c];
+                    if (s.hist && s.hist.length < HIST_SIZE) {
+                        while (s.hist.length < HIST_SIZE) {
+                            const oldestKnownPrice = s.hist[s.hist.length - 1];
+                            s.hist.push(oldestKnownPrice * (1 - (Math.random() - 0.5) * 0.015));
+                        }
+                    }
+                }
+            }
+
+            // MARK OWNERSHIP
+            USER.ownerId = uid;
+
+            saveGame();
+            render();
+            updateModal();
+            alert('동기화 완료!');
+            location.reload();
+        }
+
+
+        async function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                // FORCE SAVE before exit
+                await saveGame(true);
+                auth.signOut().then(() => {
+                    location.reload(); // Reload to reset state/auth
+                });
+            }
+        }
+
+        // Upload my score every 10s or on major events
+        function syncMyScore() {
+            // Filter Anonymous Logic: Only strictly signed-in users
+            if (!auth.currentUser || auth.currentUser.isAnonymous) return;
+            if (!myUid || !USER.alias || USER.alias.length < 2) return;
+
+            const myVal = calcVal(USER);
+
+            db.collection("ranking").doc(myUid).set({
+                nick: USER.alias,
+                asset: myVal,
+                ts: firebase.firestore.FieldValue.serverTimestamp(),
+                valid: true // Mark as "Real User"
+            }, { merge: true })
+                .catch(e => console.error("Sync Error:", e));
+        }
+
+        let unsubscribeRank = null;
+
+        function listenLeaderboard() {
+            if (unsubscribeRank) unsubscribeRank();
+
+            // Top 100 by asset desc
+            unsubscribeRank = db.collection("ranking")
+                .orderBy("asset", "desc")
+                .limit(200)
+                .onSnapshot((snapshot) => {
+                    onlineRivals = [];
+                    snapshot.forEach((doc) => {
+                        const d = doc.data();
+                        // Filter: Only show "valid" (Signed In) users
+                        // This effectively hides anonymous users derived from old data or current logic
+                        if (!d.valid) return;
+
+                        onlineRivals.push({
+                            id: doc.id,
+                            n: d.nick,
+                            last_val: d.asset,
+                            isMe: (doc.id === myUid)
+                        });
+                    });
+                    updateRankUI();
+                }, (error) => {
+                    console.error("Listen Error:", error);
+                });
+        }
+
+        function updateRankUI() {
+            if (!document.getElementById('rank-modal').classList.contains('active')) return;
+
+            let displayList = [...onlineRivals];
+            const list = document.getElementById('rank-list');
+            list.innerHTML = '';
+
+            if (displayList.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-sub);"><span class="material-symbols-rounded ranking-spin" style="font-size:32px;">sync</span><br><br>랭킹 불러오는 중...</div>';
+                return;
+            }
+
+            displayList.forEach((u, i) => {
+                const rank = i + 1;
+                const div = document.createElement('div');
+                div.className = 'rank-item';
+                if (u.isMe) div.classList.add('me');
+
+                let icon = '';
+                if (rank === 1) icon = '🥇';
+                else if (rank === 2) icon = '🥈';
+                else if (rank === 3) icon = '🥉';
+                else icon = rank;
+
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:24px; text-align:center; font-weight:800; font-size:16px;">${icon}</div>
+                        <div style="font-weight:${u.isMe ? '700' : '400'}; color:${u.isMe ? 'var(--up-color)' : 'var(--text-main)'};">${u.n}</div>
+                    </div>
+                    <div style="font-weight:600;">${fmt(u.last_val)}</div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Mailbox Listener
+        function initMail(uid) {
+            if (!db) return;
+            db.collection('mail').where('to', '==', uid).onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const data = change.doc.data();
+                        const docRef = change.doc.ref;
+
+                        if (data.type === 'asset_adjust') {
+                            const val = data.val;
+                            USER.cash += val;
+                            alert(`[관리자] 자산이 조정되었습니다.\n변동: ${fmt(val)} \n현재 자산: ${fmt(USER.cash)} `);
+
+                            // Consume message
+                            docRef.delete();
+
+                            // Persist immediately
+                            saveGame();
+                            render();
+                        }
+
+                        if (data.type === 'asset_set') {
+                            const val = data.val;
+                            USER.cash = val;
+                            alert(`[관리자] 자산이 설정되었습니다.\n설정금액: ${fmt(val)}`);
+
+                            // Consume message
+                            docRef.delete();
+
+                            // Persist immediately
+                            saveGame();
+                            render();
+                            saveGame();
+                            render();
+                        }
+
+                        if (data.type === 'stock_set') {
+                            const code = data.code;
+                            const qty = parseInt(data.qty);
+
+                            if (qty <= 0) {
+                                delete USER.pf[code];
+                                alert(`[관리자] ${MARKET[code] ? MARKET[code].n : code} 주식이 회수되었습니다.`);
+                            } else {
+                                if (!USER.pf[code]) {
+                                    USER.pf[code] = { qty: 0, avg: MARKET[code] ? MARKET[code].p : 0 };
+                                }
+                                USER.pf[code].qty = qty;
+                                alert(`[관리자] ${MARKET[code] ? MARKET[code].n : code} 수량이 ${qty}주로 설정되었습니다.`);
+                            }
+
+                            // Consume message
+                            docRef.delete();
+
+                            // Persist immediately
+                            saveGame();
+                            render();
+                            // Persist immediately
+                            saveGame();
+                            render();
+                        }
+
+                        if (data.type === 'account_delete') {
+                            alert('[관리자] 계정이 삭제되었습니다.\n초기 화면으로 돌아갑니다.');
+                            localStorage.removeItem('ran_stock_uid'); // Remove Local ID
+                            localStorage.removeItem('ran_stock_user'); // Remove Data
+                            window.location.reload(); // Reload to Start Screen
+                            docRef.delete();
+                        }
+                    }
+                });
+            });
+        }
+
+        function checkPendingOrders() {
+            if (!USER.orders || USER.orders.length === 0) return;
+
+            // Loop backwards for splicing
+            for (let i = USER.orders.length - 1; i >= 0; i--) {
+                const o = USER.orders[i];
+                const s = MARKET[o.c];
+                if (!s) continue;
+
+                let filled = false;
+
+                // Check Boundaries
+                const limitUp = Math.floor(s.open * 1.30);
+                const limitDown = Math.floor(s.open * 0.70);
+
+                // BUY LIMIT: Market Price <= Order Price
+                if (o.t === 'buy' && s.p <= o.p) {
+
+                    // Impact Calculation
+                    const filledAmt = s.p * o.q;
+                    const impact = calcImpact(filledAmt);
+                    // Exec Price is HIGHER
+                    let execPrice = Math.round(s.p * (1 + impact));
+
+                    // IF EXCEEDS LIMIT UP -> SKIP
+                    if (execPrice > limitUp) {
+                        continue; // Cannot fill today
+                    }
+
+                    filled = true;
+                    // ... (Proceed with fill)
+
+                    const baseAmount = Math.round(execPrice * o.q);
+                    const fee = Math.round(baseAmount * FEE_BUY_RATE);
+                    const totalCost = baseAmount + fee;
+
+                    // User already paid (o.p * o.q) + fee based on o.p
+                    // We need to settle the difference.
+                    const paidBase = Math.round(o.p * o.q);
+                    const paidFee = Math.round(paidBase * FEE_BUY_RATE);
+                    const paidTotal = paidBase + paidFee;
+
+                    const diff = totalCost - paidTotal;
+
+                    USER.cash -= diff;
+
+                    if (!USER.pf[o.c]) USER.pf[o.c] = { qty: 0, avg: 0 };
+                    const h = USER.pf[o.c];
+
+                    const oldVal = h.qty * h.avg;
+                    const newVal = totalCost;
+
+                    h.avg = (oldVal + newVal) / (h.qty + o.q);
+                    h.qty += o.q;
+
+                    // Market Impact
+                    s.p = execPrice;
+                    s.hist.unshift(s.p);
+                    // if (s.hist.length > HIST_SIZE) s.hist.pop();
+
+                    console.log(`[체결] ${s.n} 매수 ${o.q}주 @${fmt(execPrice)} (Diff: ${diff})`);
+                }
+                // SELL LIMIT: Market Price >= Order Price
+                else if (o.t === 'sell' && s.p >= o.p) {
+
+                    // Impact Calculation
+                    const filledAmt = s.p * o.q;
+                    const impact = calcImpact(filledAmt);
+                    // Exec Price is LOWER
+                    let execPrice = Math.round(s.p * (1 - impact));
+
+                    // IF EXCEEDS LIMIT DOWN -> SKIP
+                    if (execPrice < limitDown) {
+                        continue; // Cannot fill
+                    }
+
+                    filled = true;
+
+                    // Market Price MOVES DOWN
+                    s.p = execPrice;
+                    s.hist.unshift(s.p);
+                    // if (s.hist.length > HIST_SIZE) s.hist.pop();
+
+                    // Update Portfolio
+                    if (USER.pf[o.c]) {
+                        USER.pf[o.c].qty -= o.q;
+                        if (USER.pf[o.c].qty <= 0) delete USER.pf[o.c];
+                    }
+
+                    // Calc Proceeds
+                    const baseAmount = Math.round(execPrice * o.q);
+                    const fee = Math.round(baseAmount * FEE_SELL_RATE);
+                    const totalProceeds = baseAmount - fee;
+
+                    USER.cash += totalProceeds;
+                    console.log(`[체결] ${s.n} 매도 ${o.q}주 @${fmt(execPrice)}`);
+                }
+
+                if (filled) {
+                    USER.orders.splice(i, 1);
+                    saveGame();
+                }
+            }
+        }
+
+        // --- TAB & CHAT ---
+        function switchTab(tab) {
+            const m = document.getElementById('view-market');
+            const c = document.getElementById('view-community');
+            const tm = document.getElementById('tab-market');
+            const tc = document.getElementById('tab-community');
+
+            if (tab === 'market') {
+                m.style.display = 'block';
+                c.style.display = 'none';
+                tm.style.borderBottom = '2px solid var(--primary)';
+                tm.style.fontWeight = '700';
+                tm.style.color = 'var(--text-main)';
+                tc.style.borderBottom = '2px solid transparent';
+                tc.style.fontWeight = '400';
+                tc.style.color = 'var(--text-sub)';
+            } else {
+                m.style.display = 'none';
+                c.style.display = 'flex';
+                tc.style.borderBottom = '2px solid var(--primary)';
+                tc.style.fontWeight = '700';
+                tc.style.color = 'var(--text-main)';
+                tm.style.borderBottom = '2px solid transparent';
+                tm.style.fontWeight = '400';
+                tm.style.color = 'var(--text-sub)';
+
+                // Scroll to bottom
+                const list = document.getElementById('chat-list');
+                list.scrollTop = list.scrollHeight;
+            }
+        }
+
+        let chatUnsub = null;
+
+        function initChat() {
+            if (!db) return; // Wait for Firebase
+            const col = window.firebase.firestore().collection('chat');
+            if (chatUnsub) chatUnsub();
+
+            chatUnsub = col.orderBy('ts', 'desc').limit(200).onSnapshot(snapshot => {
+                let docs = snapshot.docs.map(d => d.data()).reverse();
+                renderChatList(docs);
+            });
+        }
+
+        function renderChatList(docs) {
+            const list = document.getElementById('chat-list');
+            list.innerHTML = '';
+
+            docs.forEach(doc => {
+                const uid = window.firebase.auth().currentUser ? window.firebase.auth().currentUser.uid : 'anon';
+                const msgIsMe = (doc.uid === uid);
+
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.flexDirection = 'column';
+                div.style.alignItems = msgIsMe ? 'flex-end' : 'flex-start';
+                div.style.marginBottom = '12px';
+
+                // Rank Badge
+                let rankBadge = '';
+                if (doc.rank > 0) {
+                    if (doc.rank === 1) rankBadge = '🥇 ';
+                    else if (doc.rank === 2) rankBadge = '🥈 ';
+                    else if (doc.rank === 3) rankBadge = '🥉 ';
+                    else rankBadge = `[${doc.rank}위]`;
+                }
+
+                // Name
+                if (!msgIsMe) {
+                    const nameDiv = document.createElement('div');
+                    nameDiv.style.fontSize = '12px';
+                    nameDiv.style.color = 'var(--text-sub)';
+                    nameDiv.style.marginBottom = '4px';
+                    nameDiv.style.marginLeft = '4px';
+                    nameDiv.innerText = rankBadge + doc.nick;
+                    div.appendChild(nameDiv);
+                }
+
+                // Bubble Wrapper
+                const bubbleWrap = document.createElement('div');
+                bubbleWrap.style.display = 'flex';
+                bubbleWrap.style.alignItems = 'flex-end';
+                bubbleWrap.style.gap = '4px';
+                if (msgIsMe) bubbleWrap.style.flexDirection = 'row-reverse';
+
+                // Bubble
+                const bubble = document.createElement('div');
+                bubble.style.padding = '8px 12px';
+                bubble.style.borderRadius = '12px';
+                bubble.style.maxWidth = '70%';
+                bubble.style.fontSize = '14px';
+                bubble.style.wordBreak = 'break-all';
+                bubble.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+
+                if (msgIsMe) {
+                    bubble.style.background = '#FEE500'; // Kakao Yellow
+                    bubble.style.color = '#000';
+                    bubble.style.borderTopRightRadius = '0';
+                    // Add badge to bubble text if me? No, cleaner without
+                } else {
+                    bubble.style.background = '#ffffff';
+                    bubble.style.color = '#000';
+                    bubble.style.border = '1px solid #eee';
+                    bubble.style.borderTopLeftRadius = '0';
+                }
+                bubble.innerText = doc.msg;
+
+                // Time
+                const date = new Date(doc.ts);
+                const timeStr = (date.getMonth() + 1) + '/' + date.getDate() + ' ' + date.getHours() + ':' + String(date.getMinutes()).padStart(2, '0');
+                const timeSpan = document.createElement('span');
+                timeSpan.style.fontSize = '10px';
+                timeSpan.style.color = 'var(--text-sub)';
+                timeSpan.style.whiteSpace = 'nowrap';
+                timeSpan.innerText = timeStr;
+
+                bubbleWrap.appendChild(bubble);
+                bubbleWrap.appendChild(timeSpan);
+                div.appendChild(bubbleWrap);
+
+                list.appendChild(div);
+            });
+
+            list.scrollTop = list.scrollHeight;
+        }
+
+        function sendChat() {
+            const inp = document.getElementById('chat-input');
+            const msg = inp.value.trim();
+            if (!msg) return;
+
+            if (!window.firebase || !db) {
+                alert('서버 연결 중입니다...');
+                return;
+            }
+
+            const currentUser = window.firebase.auth().currentUser;
+            if (!currentUser || currentUser.isAnonymous) {
+                if (confirm('채팅은 로그인 후에 이용할 수 있습니다.\n로그인 하시겠습니까?')) {
+                    openLoginModal();
+                }
+                return;
+            }
+
+            const uid = window.firebase.auth().currentUser ? window.firebase.auth().currentUser.uid : 'anon';
+
+            // Calc Rank
+            let myRank = 0;
+            if (onlineRivals) {
+                const idx = onlineRivals.findIndex(r => r.id === uid);
+                if (idx >= 0) myRank = idx + 1;
+            }
+
+            db.collection('chat').add({
+                msg: msg,
+                nick: USER.alias || '익명',
+                uid: uid,
+                rank: myRank,
+                ts: Date.now()
+            }).then(() => {
+                inp.value = '';
+            }).catch(err => {
+                console.error(err);
+                alert('전송 실패');
+            });
+        }
+
+        // --- THEME ---
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('theme-btn');
+            localStorage.setItem('kr_theme', isDark ? 'dark' : 'light');
+
+            if (isDark) {
+                btn.innerHTML = '<span class="material-symbols-rounded">light_mode</span>';
+            } else {
+                btn.innerHTML = '<span class="material-symbols-rounded">dark_mode</span>';
+            }
+        }
+
+        // --- UTILS ---
+        function calcVal(u) {
+            let pfVal = 0;
+            if (u.pf) {
+                for (let c in u.pf) {
+                    if (MARKET[c]) pfVal += u.pf[c].qty * MARKET[c].p;
+                }
+            }
+            return (u.cash || 0) + pfVal;
+        }
+
+        function renderPendingOrders() {
+            if (!USER.orders || USER.orders.length === 0) {
+                document.getElementById('pending-section').style.display = 'none';
+                return;
+            }
+            document.getElementById('pending-section').style.display = 'block';
+            const list = document.getElementById('pending-list');
+            list.innerHTML = '';
+
+            USER.orders.forEach(o => {
+                const s = MARKET[o.c];
+                if (!s) return;
+
+                const div = document.createElement('div');
+                div.className = 'stock-item';
+                div.style.borderLeft = o.t === 'buy' ? '4px solid var(--up-color)' : '4px solid var(--down-color)';
+
+                const color = o.t === 'buy' ? 'var(--up-color)' : 'var(--down-color)';
+                const typeStr = o.t === 'buy' ? '매수예약' : '매도예약';
+
+                div.innerHTML = `
+                    <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:700;">${s.n}</span>
+                        <span style="font-size:11px; padding:2px 6px; border-radius:4px; background:${o.t === 'buy' ? 'var(--up-bg)' : 'var(--down-bg)'}; color:${color}; font-weight:700;">${typeStr}</span>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-sub); margin-top:2px;">
+                        ${o.q}주 @ ${o.p.toLocaleString()}원
+                    </div>
+                </div>
+                    <button onclick="cancelOrder(${o.ts})" style="background:var(--surface-2); border:1px solid var(--card-border); padding:6px 12px; border-radius:4px; color:var(--text-main); font-size:12px; font-weight:600;">취소</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function cancelOrder(ts) {
+            const idx = USER.orders.findIndex(o => o.ts === ts);
+            if (idx === -1) return;
+
+            const o = USER.orders[idx];
+            // Refund
+            const FEE_BUY_RATE = 0.00015;
+
+            if (o.t === 'buy') {
+                const baseAmount = Math.round(o.p * o.q);
+                // REFUND CORRECT FEE
+                const fee = Math.round(baseAmount * FEE_BUY_RATE);
+                const totalCost = baseAmount + fee;
+                USER.cash += totalCost;
+            } else {
+                // Sell Order Cancellation
+                // Money is not involved (it was stock lock).
+                // Stock was NOT deducted from USER.pf.qty, only locked.
+                // Removing the order from USER.orders handles it implicitly (getLockedQty decreases).
+                // No refund action needed for Stock quantity here.
+            }
+
+            USER.orders.splice(idx, 1);
+            saveGame();
+            render();
+            alert('주문이 취소되었습니다.');
+        }
+
+        function checkNickname() {
+            if (!USER.alias) {
+                document.getElementById('nick-modal').classList.add('active');
+            } else {
+                // Now handled by window.onload
+            }
+            document.getElementById('my-nick-display').innerText = USER.alias || '투자자';
+        }
+
+        async function setNickname() {
+            const input = document.getElementById('nick-input');
+            const btn = document.getElementById('nick-btn');
+            const val = input.value.trim();
+
+            if (val.length < 2) {
+                alert('2글자 이상 입력해주세요.');
+                return;
+            }
+
+            if (!db) {
+                alert('서버 연결 중입니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+
+            const originalText = btn.innerText;
+            btn.innerText = "중복 확인 중...";
+            btn.disabled = true;
+
+            try {
+                let isTaken = false;
+                const user = window.firebase.auth().currentUser;
+                const isAnon = user ? user.isAnonymous : true;
+
+                // Only check duplicates if user is logged in (Real User)
+                if (!isAnon) {
+                    // Check duplicate (Only among Valid/Logged-in users)
+                    // Filter: nick == val AND valid == true
+                    const snapshot = await db.collection('ranking')
+                        .where('nick', '==', val)
+                        .where('valid', '==', true)
+                        .get();
+
+                    // If found, check if it's not me
+                    snapshot.forEach(doc => {
+                        if (doc.id !== myUid) isTaken = true;
+                    });
+                }
+
+                if (isTaken) {
+                    alert('이미 사용 중인 닉네임입니다 😢\n다른 닉네임을 입력해주세요.');
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Success
+                USER.alias = val;
+
+                // FORCE CLOUD SAVE (Sync Nickname immediately)
+                saveGame(true);
+
+                // Force sync
+                await syncMyScore(); // This adds 'valid: true' to me as well.
+
+                // 3. Retroactive Nickname Update (Chat History)
+                // Remove orderBy to avoid requiring a Composite Index (uid + ts)
+                // Just fetch recent 100 messages by this UID (Firestore default order)
+                db.collection('chat').where('uid', '==', myUid).limit(100).get()
+                    .then(snaps => {
+                        const batch = db.batch();
+                        if (snaps.empty) return;
+
+                        snaps.forEach(doc => {
+                            batch.update(doc.ref, { nick: val });
+                        });
+                        return batch.commit();
+                    })
+                    .then(() => {
+                        console.log("Chat history updated");
+                    })
+                    .catch(e => console.error("Chat Nick Update Failed:", e));
+
+                alert('닉네임이 변경되었습니다!');
+                document.getElementById('nick-modal').classList.remove('active');
+
+                // RESET BUTTON STATE FOR NEXT TIME
+                btn.innerText = "변경하기";
+                btn.disabled = false;
+
+                checkNickname();
+
+            } catch (e) {
+                console.error(e);
+                alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function openRank() {
+            document.getElementById('rank-modal').classList.add('active');
+            // Show loading
+            document.getElementById('rank-list').innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-sub);">최신 정보 동기화 중...</div>';
+
+            // 1. Sync My Score
+            syncMyScore();
+
+            // 2. Refresh Listener (Fetch new data)
+            if (myUid) listenLeaderboard();
+        }
+
+        function closeRank() {
+            document.getElementById('rank-modal').classList.remove('active');
+        }
+
+        function toggleLike(c) {
+            const idx = USER.likes.indexOf(c);
+            if (idx >= 0) USER.likes.splice(idx, 1);
+            else USER.likes.push(c);
+            saveGame();
+            render();
+        }
+
+        function setSort(mode) {
+            SORT_MODE = mode;
+            renderMarket();
+        }
+
+        function updateSortChips() {
+            document.querySelectorAll('.sort-chip').forEach(el => {
+                if (el.dataset.mode === SORT_MODE) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+        }
+
+        // --- MODAL & CHART ---
+        function openModal(code) {
+            CUR_CODE = code;
+            TRADE_QTY = 1;
+
+            const s = MARKET[code];
+            document.getElementById('m-name').innerText = s.n;
+            document.getElementById('m-code').innerText = code;
+            document.getElementById('m-code').innerText = CUR_CODE;
+
+            // Init Order Price to Current Price if new view
+            ORDER_PRICE = s.p;
+            document.getElementById('m-price-input').value = s.p;
+
+            // Check if liked
+            const isLiked = USER.likes.includes(CUR_CODE);
+            document.getElementById('m-like-btn').innerText = isLiked ? 'favorite' : 'favorite_border';
+            document.getElementById('m-like-btn').style.color = isLiked ? '#ef4444' : 'var(--text-main)';
+
+            document.getElementById('trade-modal').classList.add('active');
+            updateModal();
+
+            // Scroll to end
+            setTimeout(() => {
+                const scroll = document.getElementById('chart-scroll');
+                scroll.scrollLeft = scroll.scrollWidth;
+            }, 100);
+        }
+
+        function updateModal() {
+            if (!CUR_CODE) return;
+            const s = MARKET[CUR_CODE];
+            const chg = ((s.p - s.base) / s.base) * 100;
+
+            // 1. Check Scroll Position BEFORE rendering new data
+            const scrollBox = document.getElementById('chart-scroll');
+            const isAtEnd = (scrollBox.scrollWidth - scrollBox.scrollLeft - scrollBox.clientWidth) < 50;
+
+            const pEl = document.getElementById('m-price');
+            pEl.innerText = fmt(s.p);
+            pEl.style.color = chg > 0 ? 'var(--up-color)' : (chg < 0 ? 'var(--down-color)' : 'var(--text-main)');
+
+            const cEl = document.getElementById('m-change');
+            cEl.innerText = `${chg > 0 ? '+' : ''}${chg.toFixed(2)}% `;
+            cEl.style.color = pEl.style.color;
+
+            const h = USER.pf[CUR_CODE];
+            // Holdings (Total = Available + Locked)
+            let holdText = '0주';
+            if (USER.pf[CUR_CODE]) {
+                const available = USER.pf[CUR_CODE].qty;
+                const locked = getLockedQty(CUR_CODE);
+                const total = available + locked;
+                if (locked > 0) holdText = `${available} 주(주문중 ${locked}주)`;
+                else holdText = `${available} 주`;
+            }
+            document.getElementById('m-hold').innerText = holdText;
+
+            calcTotal();
+
+            // Render detailed chart if active
+            const tvCheck = document.getElementById('tv-chart-check');
+            if (tvCheck && tvCheck.checked) {
+                renderTVChart(s);
+            } else {
+                drawChart(s.hist, h ? h.avg : null);
+            }
+
+            // 2. Auto-scroll if user was at the end
+            if (isAtEnd) {
+                // Use setTimeout to ensure DOM has updated width
+                setTimeout(() => {
+                    scrollBox.scrollLeft = scrollBox.scrollWidth;
+                }, 0);
+            }
+        }
+
+        function toggleLikeModal() {
+            if (!CUR_CODE) return;
+            toggleLike(CUR_CODE);
+            // update icon
+            const isLiked = USER.likes.includes(CUR_CODE);
+            document.getElementById('m-like-btn').innerText = isLiked ? 'favorite' : 'favorite_border';
+            document.getElementById('m-like-btn').style.color = isLiked ? '#ef4444' : 'var(--text-main)';
+        }
+
+        // --- ZOOM & PAN ---
+        let CHART_SCALE = 1.0;
+        let IS_DRAGGING = false;
+        let LAST_X = 0;
+
+        function setupChartInteraction() {
+            const box = document.getElementById('chart-box');
+            const cvs = document.getElementById('chartCanvas');
+            const scrollBox = document.getElementById('chart-scroll');
+            const tip = document.getElementById('chart-tooltip');
+
+            // --- Tooltip & Left Click Logic ---
+            const handleMove = (x) => {
+                // If dragging, do not show tooltip obviously
+                if (IS_DRAGGING) return;
+
+                if (!CUR_CODE) return;
+                const data = MARKET[CUR_CODE].hist;
+                if (!data || data.length === 0) return;
+
+                const rect = box.getBoundingClientRect();
+                const relX = x - rect.left;
+
+                const pxPerPoint = 6 * CHART_SCALE;
+                let idx = Math.round(relX / pxPerPoint);
+                if (idx < 0) idx = 0; if (idx >= data.length) idx = data.length - 1;
+
+                const effectiveIdx = data.length - 1 - idx;
+                const price = data[effectiveIdx];
+
+                // Calculate Y position
+                // Logic must match drawChart
+                // Filter NaNs for calculation safety
+                const validData = data.filter(v => isFinite(v));
+                if (validData.length === 0) return;
+
+                const min = Math.min(...validData) * 0.995;
+                const max = Math.max(...validData) * 1.005;
+                const range = max - min || 1;
+                const h = box.clientHeight || 220; // Ensure logic matches height
+
+                let y = h - ((price - min) / range * h);
+                if (isNaN(y)) y = h / 2; // Center if invalid
+
+                // Show Dot
+                let dot = document.getElementById('chart-dot');
+                if (!dot) {
+                    dot = document.createElement('div');
+                    dot.id = 'chart-dot';
+                    dot.style.position = 'absolute';
+                    dot.style.width = '8px';
+                    dot.style.height = '8px';
+                    dot.style.background = 'red';
+                    dot.style.borderRadius = '50%';
+                    dot.style.transform = 'translate(-50%, -50%)';
+                    dot.style.pointerEvents = 'none';
+                    box.appendChild(dot);
+                }
+                dot.style.display = 'block';
+                dot.style.left = `${idx * pxPerPoint}px`;
+                dot.style.top = `${y}px`;
+
+                tip.style.display = 'block';
+                tip.style.left = `${idx * pxPerPoint}px`;
+                tip.style.top = `${Math.max(0, y - 30)}px`; // Position above dot, clamp to top
+                tip.style.transform = 'translateX(-50%)'; // Center horizontally
+                tip.innerText = fmt(price);
+            };
+
+            box.addEventListener('mousemove', e => {
+                if (!IS_DRAGGING) handleMove(e.clientX);
+            });
+            box.addEventListener('touchstart', e => {
+                if (e.touches.length === 1) handleMove(e.touches[0].clientX);
+            });
+            box.addEventListener('touchmove', e => {
+                if (e.touches.length === 1 && !IS_DRAGGING) handleMove(e.touches[0].clientX);
+            });
+
+            box.addEventListener('mouseleave', () => {
+                tip.style.display = 'none';
+                const dot = document.getElementById('chart-dot');
+                if (dot) dot.style.display = 'none';
+            });
+            box.addEventListener('touchend', () => {
+                tip.style.display = 'none';
+                const dot = document.getElementById('chart-dot');
+                if (dot) dot.style.display = 'none';
+            });
+
+            // Chart Click Logic: Set order price
+            cvs.addEventListener('click', e => {
+                if (dragDist > 5) return; // Ignore if was dragging
+                if (!CUR_CODE) return;
+                const data = MARKET[CUR_CODE].hist;
+                if (!data || data.length === 0) return;
+
+                const rect = cvs.getBoundingClientRect();
+                const relX = e.clientX - rect.left;
+
+                const pxPerPoint = 6 * CHART_SCALE;
+                let idx = Math.round(relX / pxPerPoint);
+                if (idx < 0) idx = 0; if (idx >= data.length) idx = data.length - 1;
+
+                const effectiveIdx = data.length - 1 - idx;
+                const price = data[effectiveIdx];
+                setOrderPrice(price);
+            });
+
+
+            // --- ZOOM (Wheel) ---
+            // User Req: Scroll Wheel -> Zoom In/Out (Always)
+            // Fix: Allow Horizontal Scroll (Trackpad) to pass through
+            scrollBox.addEventListener('wheel', e => {
+                // If horizontal scroll is dominant, let it happen naturally
+                if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                const isAtEnd = (scrollBox.scrollWidth - scrollBox.scrollLeft - scrollBox.clientWidth) < 50;
+
+                if (e.deltaY < 0) CHART_SCALE += 0.1; // Scroll Up -> Zoom In
+                else CHART_SCALE -= 0.1;              // Scroll Down -> Zoom Out
+
+                if (CHART_SCALE < 0.2) CHART_SCALE = 0.2;
+                if (CHART_SCALE > 3.0) CHART_SCALE = 3.0;
+
+                updateModal();
+
+                // Maintain position at end if we were at end
+                if (isAtEnd) {
+                    setTimeout(() => scrollBox.scrollLeft = scrollBox.scrollWidth, 0);
+                }
+            }, { passive: false });
+
+            // --- PINCH ZOOM (Touch) ---
+            let initialPinchDist = 0;
+            let initialScale = 1.0;
+
+            scrollBox.addEventListener('touchstart', e => {
+                if (e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    initialPinchDist = Math.hypot(dx, dy);
+                    initialScale = CHART_SCALE;
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            scrollBox.addEventListener('touchmove', e => {
+                if (e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (initialPinchDist > 0) {
+                        const ratio = dist / initialPinchDist;
+                        let newScale = initialScale * ratio;
+                        if (newScale < 0.2) newScale = 0.2;
+                        if (newScale > 3.0) newScale = 3.0;
+
+                        if (Math.abs(newScale - CHART_SCALE) > 0.05) {
+                            CHART_SCALE = newScale;
+                            updateModal();
+                        }
+                    }
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // --- PAN (Drag) ---
+            scrollBox.addEventListener('contextmenu', e => e.preventDefault()); // Block Menu
+
+            // --- PAN (Right Click OR Left Click Drag) ---
+            let dragDist = 0;
+            scrollBox.addEventListener('mousedown', e => {
+                // Allow Left (0) or Right (2) click
+                if (e.button === 0 || e.button === 2) {
+                    IS_DRAGGING = true;
+                    LAST_X = e.clientX;
+                    dragDist = 0; // Reset
+                    scrollBox.style.cursor = 'grabbing';
+                    // Do NOT preventDefault() on left click immediately, 
+                    // otherwise focus might not work, but here we want to grab.
+                    // Actually, standard behavior: prevent selection
+                    e.preventDefault();
+                }
+            });
+
+            window.addEventListener('mousemove', e => {
+                if (IS_DRAGGING) {
+                    const dx = e.clientX - LAST_X;
+                    scrollBox.scrollLeft -= dx; // Move opposite
+                    LAST_X = e.clientX;
+                    dragDist += Math.abs(dx); // Accumulate distance
+                    e.preventDefault(); // Prevent text selection
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (IS_DRAGGING) {
+                    IS_DRAGGING = false;
+                    scrollBox.style.cursor = 'auto';
+                    // We keep dragDist for the subsequent click event to check
+                    setTimeout(() => dragDist = 0, 100); // Reset after short delay
+                }
+            });
+        }
+
+        function drawChart(data, avgPrice) {
+            const box = document.getElementById('chart-box');
+            const cvs = document.getElementById('chartCanvas');
+            const ctx = cvs.getContext('2d');
+
+            // Dynamic Scale
+            // Dynamic Scale
+            const pxPerPoint = 6 * CHART_SCALE;
+            const totalWidth = data.length * pxPerPoint;
+
+            // HI-DPI Fix & Canvas Sizing
+            const dpr = window.devicePixelRatio || 1;
+            const height = box.clientHeight || 220;
+
+            // Set CSS Size - REMOVED SPACES and used rounded values
+            box.style.width = `${Math.floor(totalWidth)}px`;
+            cvs.style.width = `${Math.floor(totalWidth)}px`;
+            cvs.style.height = `${Math.floor(height)}px`;
+
+            // Set Physical Size (Scaled) - Floor to ensure integer
+            cvs.width = Math.floor(totalWidth * dpr);
+            cvs.height = Math.floor(height * dpr);
+
+            // Scale Context
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset
+            ctx.scale(dpr, dpr);
+
+            const h = height; // Use logical height for drawing
+            const w = totalWidth;
+
+            const drawData = [...data].reverse();
+
+            // Sanitize Data (Filter NaNs)
+            const validData = drawData.map(v => (isNaN(v) || !isFinite(v)) ? 0 : v);
+
+            // Calculate Min/Max ignoring 0s if possible, or just robustly
+            // But if price is actually 0? existing logic uses it.
+            // Let's just use validData.
+
+            const min = Math.min(...validData) * 0.995;
+            const max = Math.max(...validData) * 1.005;
+            const range = max - min || 1;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Safety if range is 0 or all data invalid
+            if (!isFinite(range) || validData.length === 0) return;
+
+            const isUp = validData[validData.length - 1] >= validData[0];
+            const color = isUp ? '#ef4444' : '#3b82f6';
+
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, isUp ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+
+            ctx.beginPath();
+            validData.forEach((p, i) => {
+                const x = i * pxPerPoint;
+                let y = h - ((p - min) / range * h);
+                if (isNaN(y)) y = h; // Fallback
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.lineTo((validData.length - 1) * pxPerPoint, h);
+            ctx.lineTo(0, h);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.beginPath();
+            validData.forEach((p, i) => {
+                const x = i * pxPerPoint;
+                let y = h - ((p - min) / range * h);
+                if (isNaN(y)) y = h; // Fallback
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5; // Slightly thinner for crispness
+            ctx.stroke();
+
+            if (avgPrice) {
+                const y = h - ((avgPrice - min) / range * h);
+                if (y > -10 && y < h + 10) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 5]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.font = '11px Pretendard';
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillText('내 평단', 4, y - 4);
+                }
+            }
+        }
+
+        // Returns the quantity of a stock locked in pending sell orders
+        function getLockedQty(code) {
+            let locked = 0;
+            USER.orders.forEach(o => {
+                if (o.c === code && o.t === 'sell') {
+                    locked += o.q;
+                }
+            });
+            return locked;
+        }
+
+        // --- Logic ---
+        function qty(d) {
+            TRADE_QTY += d;
+            if (TRADE_QTY < 1) TRADE_QTY = 1;
+            document.getElementById('m-qty').value = TRADE_QTY;
+            calcTotal();
+        }
+
+        function setMax() {
+            if (!CUR_CODE) return;
+            const cur = MARKET[CUR_CODE].p;
+            const max = Math.floor(USER.cash / cur);
+            if (max > 0) TRADE_QTY = max;
+            else TRADE_QTY = 1;
+            document.getElementById('m-qty').value = TRADE_QTY;
+            calcTotal();
+        }
+
+        function manualQty() {
+            const val = parseInt(document.getElementById('m-qty').value);
+            if (!isNaN(val) && val > 0) {
+                TRADE_QTY = val;
+                calcTotal();
+            }
+        }
+
+        function calcTotal() {
+            if (!CUR_CODE) return;
+            const s = MARKET[CUR_CODE];
+
+            // Slippage Calculation
+            const estBase = s.p * TRADE_QTY;
+            const impact = calcImpact(estBase);
+            const impactPct = (impact * 100).toFixed(2);
+
+            // Execution Prices (Slippage applied)
+            const execPriceBuy = Math.round(s.p * (1 + impact));
+            const execPriceSell = Math.round(s.p * (1 - impact));
+
+            const totalBuy = execPriceBuy * TRADE_QTY;
+            // For sell side, we don't strictly need totalSell for display unless we show 'Estimated Proceeds'
+            // const totalSell = execPriceSell * TRADE_QTY;
+
+            const feeBuy = Math.round(totalBuy * FEE_BUY_RATE);
+            // const feeSell = Math.round(totalSell * FEE_SELL_RATE);
+
+            let buyHtml = `예상 결제금액: <span id="m-total" style="font-weight:700; color:var(--text-main);">${fmt(totalBuy + feeBuy)}</span>`;
+            if (impact > 0.005) { // Show if > 0.5%
+                buyHtml += `<div style="font-size:11px; color:var(--down-color); margin-top:2px;">⚠️ 시장 충격 예상: 체결가 +${impactPct}%</div>`;
+            }
+
+            const estDiv = document.getElementById('est-container');
+            if (estDiv) {
+                let html = `예상 결제금액: <span style="font-weight:700; color:var(--text-main);">${fmt(totalBuy + feeBuy)}</span>`;
+                if (impact > 0.005) {
+                    html += `<div style="font-size:11px; color:#ef4444; font-weight:600; margin-top:4px;">⚠️ 대량 주문 경고: 약 ${impactPct}% 비싸게 체결될 수 있습니다.</div>`;
+                    html += `<div style="font-size:11px; color:var(--text-sub);">체결예상가: ${fmt(execPriceBuy)} (수수료 별도)</div>`;
+                }
+                estDiv.innerHTML = html;
+            }
+
+            // Update Volume/Amt Display
+            document.getElementById('m-vol-display').innerText = s.v_qty.toLocaleString();
+            document.getElementById('m-amt-display').innerText = Math.floor(s.v_amt / 1000000).toLocaleString() + '백만';
+
+            renderOrderBook(s);
+
+            // Check cash for buy
+            const acc = totalBuy + feeBuy;
+            const h = USER.pf[CUR_CODE];
+            document.getElementById('btn-buy').disabled = USER.cash < acc;
+
+            // For sell, consider available holdings (total - locked)
+            const availableHoldings = (h ? h.qty : 0) - getLockedQty(CUR_CODE);
+            document.getElementById('btn-sell').disabled = (availableHoldings < TRADE_QTY);
+        }
+
+        function trade(type) {
+            if (!CUR_CODE) return;
+            const s = MARKET[CUR_CODE];
+            const isMarket = document.getElementById('m-market-check').checked;
+
+            // 1. Determine Price
+            let price = ORDER_PRICE;
+            if (isMarket) price = s.p;
+
+            if (price <= 0 || isNaN(price)) {
+                alert('올바른 가격을 입력하세요.');
+                return;
+            }
+            if (TRADE_QTY < 1) {
+                alert('1주 이상 주문 가능합니다.');
+                return;
+            }
+
+            // 2. Calculate Amounts
+            // NOTE: We now use EXECUTION PRICE (Slippage applied)
+            const estBase = price * TRADE_QTY;
+            const impact = calcImpact(estBase); // Calc impact based on order size
+
+            // --- PRICE LIMIT CHECK (Sanghan/Hahan) ---
+            const limitUp = Math.floor(s.open * 1.30);
+            const limitDown = Math.floor(s.open * 0.70);
+
+            if (type === 'buy') {
+
+                // Immediate Execution
+                if (isMarket || price >= s.p) {
+
+                    // SLIPPAGE APPLIED: You buy at the PUMPED price.
+                    const execPrice = Math.round(s.p * (1 + impact));
+
+                    // CHECK LIMIT UP
+                    if (execPrice > limitUp) {
+                        alert(`상한가(${fmt(limitUp)})에 도달하여 매수할 수 없습니다.`);
+                        return;
+                    }
+
+                    const fillBase = Math.round(execPrice * TRADE_QTY);
+                    const fillFee = Math.round(fillBase * FEE_BUY_RATE);
+                    const fillTotal = fillBase + fillFee;
+
+                    if (USER.cash < fillTotal) {
+                        alert(`현금이 부족합니다.\n(시장가 급등 예상: ${fmt(execPrice)})`);
+                        return;
+                    }
+
+                    USER.cash -= fillTotal;
+
+                    if (!USER.pf[CUR_CODE]) USER.pf[CUR_CODE] = { qty: 0, avg: 0 };
+                    const h = USER.pf[CUR_CODE];
+                    h.avg = ((h.qty * h.avg) + fillTotal) / (h.qty + TRADE_QTY);
+                    h.qty += TRADE_QTY;
+
+                    // Apply Impact to Market
+                    s.p = execPrice;
+                    s.hist.unshift(s.p);
+                    // if (s.hist.length > HIST_SIZE) s.hist.pop();
+
+                    console.log(`[매수체결] ${TRADE_QTY}주 @ ${fmt(execPrice)} (Impact: +${(impact * 100).toFixed(2)}%)`);
+                    alert(`매수 성공!\n체결가: ${fmt(execPrice)}\n(시장 충격으로 가격이 상승했습니다)`);
+                } else {
+                    // Limit Order (Pending)
+                    // Check if Limit Price ITSELF is valid? 
+                    // Usually you can PLACE order above limit, but it triggers rejection or waits.
+                    // Let's checking if Limit Price > Limit Up
+                    if (price > limitUp) {
+                        alert(`주문단가가 상한가(${fmt(limitUp)})를 초과할 수 없습니다.`);
+                        return;
+                    }
+
+                    // Escrow based on LIMIT PRICE + Fee
+                    const limitBase = Math.round(price * TRADE_QTY);
+                    const limitFee = Math.round(limitBase * FEE_BUY_RATE);
+                    const totalCost = limitBase + limitFee;
+
+                    if (USER.cash < totalCost) {
+                        alert('현금이 부족합니다.');
+                        return;
+                    }
+
+                    USER.cash -= totalCost;
+                    USER.orders.push({
+                        ts: Date.now(),
+                        t: 'buy',
+                        c: CUR_CODE,
+                        p: price,
+                        q: TRADE_QTY
+                    });
+                    alert('매수 예약 주문이 접수되었습니다.');
+                }
+            } else {
+                // SELL
+                const h = USER.pf[CUR_CODE];
+                if (!h || h.qty < 0) return;
+
+                const locked = getLockedQty(CUR_CODE);
+                const available = h.qty - locked;
+
+                if (available < TRADE_QTY) {
+                    alert('주문 가능 수량이 부족합니다.');
+                    return;
+                }
+
+                if (isMarket || price <= s.p) {
+                    // Immediate Fill
+                    // SLIPPAGE APPLIED: You sell at the DUMPED price.
+                    const execPrice = Math.round(s.p * (1 - impact));
+
+                    // CHECK LIMIT DOWN
+                    if (execPrice < limitDown) {
+                        alert(`하한가(${fmt(limitDown)})에 도달하여 매도할 수 없습니다.`);
+                        return;
+                    }
+
+                    const fillBase = Math.round(execPrice * TRADE_QTY);
+                    const fillFee = Math.round(fillBase * FEE_SELL_RATE);
+                    const fillProceeds = fillBase - fillFee;
+
+                    USER.cash += fillProceeds;
+                    h.qty -= TRADE_QTY;
+                    if (h.qty === 0) delete USER.pf[CUR_CODE];
+
+                    // Market Impact
+                    s.p = execPrice;
+                    s.hist.unshift(s.p);
+                    // if (s.hist.length > HIST_SIZE) s.hist.pop();
+
+                    console.log(`[매도체결] ${TRADE_QTY}주 @ ${fmt(execPrice)} (Impact: -${(impact * 100).toFixed(2)}%)`);
+                    alert(`매도 성공!\n체결가: ${fmt(execPrice)}\n(시장 충격으로 가격이 하락했습니다)`);
+                } else {
+                    // Pending Sell
+                    if (price < limitDown) {
+                        alert(`주문단가가 하한가(${fmt(limitDown)}) 미만일 수 없습니다.`);
+                        return;
+                    }
+
+                    USER.orders.push({
+                        ts: Date.now(),
+                        t: 'sell',
+                        c: CUR_CODE,
+                        p: price,
+                        q: TRADE_QTY,
+                        avg: h.avg
+                    });
+                    alert('매도 예약 주문이 접수되었습니다.');
+                }
+            }
+
+            saveGame();
+            render();
+            updateModal();
+        }
+
+        function closeModal() {
+            document.getElementById('trade-modal').classList.remove('active');
+            CUR_CODE = null;
+        }
+
+        function setupSearch() {
+            document.getElementById('k-search').addEventListener('input', renderMarket);
+        }
+
+        function fmt(n) {
+            return Math.round(n).toLocaleString('ko-KR') + '원';
+        }
+
+        function manualPrice() {
+            const val = parseInt(document.getElementById('m-price-input').value);
+            if (!isNaN(val) && val > 0) {
+                ORDER_PRICE = val;
+                calcTotal();
+            }
+        }
+
+        function setOrderPrice(p) {
+            ORDER_PRICE = p;
+            document.getElementById('m-price-input').value = p;
+            calcTotal();
+        }
+
+        function setMaxSell() {
+            if (!CUR_CODE) return;
+            if (USER.pf[CUR_CODE]) {
+                TRADE_QTY = USER.pf[CUR_CODE].qty;
+                if (TRADE_QTY < 1) TRADE_QTY = 1;
+                document.getElementById('m-qty').value = TRADE_QTY;
+                calcTotal();
+            }
+        }
+
+        function renderOrderBook(s) {
+            const el = document.getElementById('order-book');
+            const tick = getTickSize(s.p);
+
+            // Set scroll style
+            el.style.maxHeight = '200px';
+            el.style.overflowY = 'auto';
+            el.style.webkitOverflowScrolling = 'touch';
+
+            let html = '<table style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">';
+
+            // Upper Limit Row
+            const limitUp = Math.floor(s.open * 1.30);
+            html += `
+            <tr style="background:rgba(239, 68, 68, 0.1); border-bottom:2px solid var(--card-border);">
+                <td style="color:var(--text-sub);">상한가</td>
+                 <td style="color:var(--up-color); font-weight:700;">${limitUp.toLocaleString()}</td>
+                <td>-</td>
+            </tr>`;
+
+            // Asks (10 Levels) - Reverse order (High to Low)
+            for (let i = 10; i >= 0; i--) {
+                const p = s.p + (tick * i);
+                const isLimit = (p >= s.open * 1.30);
+                const isTarget = (p === ORDER_PRICE);
+                const chg = ((p - s.base) / s.base) * 100;
+                const color = chg > 0 ? 'var(--up-color)' : (chg < 0 ? 'var(--down-color)' : 'var(--text-main)');
+
+                // Sim Order Vol with Noise (Dynamic)
+                const baseVol = Math.floor(s.vol * 100000 / (i + 1));
+                const noise = 1 + (Math.random() * 0.2 - 0.1); // +/- 10%
+                const vol = Math.floor(baseVol * noise);
+
+                if (i === 0) continue; // Skip current price level in Ask list?
+                // Usually Order Book shows Asks including current if it's the best ask.
+                // Let's just show i=10 to i=0. But wait, i=0 is current price.
+                // If i=0 is current price, it should be the boundary.
+
+                html += `
+                <tr onclick="setOrderPrice(${p})" style="cursor:pointer; background:${isTarget ? 'var(--surface-1)' : 'rgba(59, 130, 246, 0.05)'}; border: ${isTarget ? '2px solid var(--primary)' : 'none'};">
+                    <td style="width:33%; color:var(--text-sub); border-bottom:1px solid var(--card-border);">${isLimit ? '상한가' : ''}</td>
+                    <td style="width:34%; color:${color}; font-weight:600; border-bottom:1px solid var(--card-border); background:rgba(59, 130, 246, 0.1);">${p.toLocaleString()}</td>
+                    <td style="width:33%; text-align:left; padding-left:8px; border-bottom:1px solid var(--card-border);">${vol.toLocaleString()}</td>
+                </tr>`;
+            }
+
+            // Bids (10 Levels)
+            for (let i = 1; i <= 10; i++) {
+                const p = s.p - (tick * i);
+                const isLimit = (p <= s.open * 0.70);
+                const isTarget = (p === ORDER_PRICE);
+                const chg = ((p - s.base) / s.base) * 100;
+                const color = chg > 0 ? 'var(--up-color)' : (chg < 0 ? 'var(--down-color)' : 'var(--text-main)');
+
+                // Sim Order Vol with Noise
+                const baseVol = Math.floor(s.vol * 120000 / i);
+                const noise = 1 + (Math.random() * 0.2 - 0.1); // +/- 10%
+                const vol = Math.floor(baseVol * noise);
+
+                html += `
+                <tr onclick="setOrderPrice(${p})" style="cursor:pointer; background:${isTarget ? 'var(--surface-1)' : 'rgba(239, 68, 68, 0.05)'}; border: ${isTarget ? '2px solid var(--primary)' : 'none'};">
+                    <td style="width:33%; text-align:right; padding-right:8px; border-bottom:1px solid var(--card-border);">${vol.toLocaleString()}</td>
+                    <td style="width:34%; color:${color}; font-weight:600; border-bottom:1px solid var(--card-border); background:rgba(239, 68, 68, 0.1);">${p.toLocaleString()}</td>
+                    <td style="width:33%; color:var(--text-sub); border-bottom:1px solid var(--card-border);">${isLimit ? '하한가' : ''}</td>
+                </tr>`;
+            }
+
+            // Lower Limit Row
+            const limitDown = Math.floor(s.open * 0.70);
+            html += `
+            <tr style="background:rgba(59, 130, 246, 0.1); border-top:2px solid var(--card-border);">
+                <td>-</td>
+                <td style="color:var(--down-color); font-weight:700;">${limitDown.toLocaleString()}</td>
+                <td style="color:var(--text-sub);">하한가</td>
+            </tr>`;
+
+            html += '</table>';
+            el.innerHTML = html;
+        }
+
+        function getTickSize(p) {
+            if (p < 2000) return 1;
+            if (p < 5000) return 5;
+            if (p < 20000) return 10;
+            if (p < 50000) return 50;
+            if (p < 200000) return 100;
+            if (p < 500000) return 500;
+            return 1000;
+        }
+
+        document.getElementById('trade-modal').addEventListener('click', e => {
+            if (e.target.id === 'trade-modal') closeModal();
+        });
+
+        // ADMIN LOGIC
+        // ADMIN LOGIC
+        function openAdmin() {
+            document.getElementById('admin-modal').classList.add('active');
+        }
+
+        async function adminSearchUser() {
+            const q = document.getElementById('admin-search').value.trim();
+            if (!q) return;
+
+            const resDiv = document.getElementById('admin-result');
+            resDiv.innerHTML = '검색 중...';
+
+            // Query Ranking (Limited to those who synced)
+            try {
+                const snapshot = await db.collection('ranking').where('nick', '==', q).get();
+                if (snapshot.empty) {
+                    resDiv.innerHTML = '검색 결과가 없습니다.';
+                    return;
+                }
+
+                resDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const item = document.createElement('div');
+                    item.style.padding = '12px';
+                    item.style.borderBottom = '1px solid var(--card-border)';
+                    item.innerHTML = `
+                        <div style="font-weight:700;">${d.nick}</div>
+                        <div style="font-size:12px; color:var(--text-sub); margin-bottom:4px;">ID: ${doc.id}</div>
+                        <div style="font-size:14px;">자산: ${fmt(d.asset)}</div>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <input type="number" id="cash-${doc.id}" placeholder="설정할 금액" style="width:100px; padding:4px;">
+                            <button onclick="adminGiveCash('${doc.id}', '${d.nick}')" style="background:var(--up-color); color:white; border:none; padding:4px 8px; border-radius:4px;">설정(=)</button>
+                        </div>
+                        <div style="margin-top:8px; display:flex; gap:8px;">
+                            <button onclick="adminViewStocks('${doc.id}', '${d.nick}')" style="flex:1; background:var(--surface-2); border:1px solid var(--card-border); padding:6px; border-radius:4px; font-size:12px;">주식 관리</button>
+                            <button onclick="adminDeleteUser('${doc.id}', '${d.nick}')" style="background:#ff4d4d; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:700;">삭제</button>
+                        </div>
+                   `;
+                    resDiv.appendChild(item);
+                });
+            } catch (e) {
+                resDiv.innerText = "Error: " + e.message;
+            }
+        }
+
+        async function adminGiveCash(targetUid, targetNick) {
+            const val = parseInt(document.getElementById(`cash-${targetUid}`).value);
+            if (isNaN(val)) return;
+
+            if (!confirm(`${targetNick} 님의 자산을 ${fmt(val)} 으로 설정하시겠습니까?`)) return;
+
+            // Use Mailbox System to avoid Data Race with User's Auto-Save
+            try {
+                await db.collection('mail').add({
+                    to: targetUid,
+                    type: 'asset_set',
+                    val: val,
+                    ts: Date.now()
+                });
+
+                alert('자산 설정 메시지를 보냈습니다. 대상 유저가 접속 중이면 즉시, 아니면 다음 접속 시 적용됩니다.');
+                adminSearchUser(); // Refresh
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function adminViewStocks(targetUid, targetNick) {
+            const resDiv = document.getElementById('admin-result');
+            resDiv.innerHTML = '데이터 로딩 중...';
+
+            try {
+                const userDoc = await db.collection('users').doc(targetUid).get();
+                if (!userDoc.exists || !userDoc.data().user) {
+                    resDiv.innerHTML = '유저 상세 데이터가 없습니다.';
+                    return;
+                }
+
+                const uData = JSON.parse(userDoc.data().user);
+                const pf = uData.pf || {};
+
+                let html = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h3 style="margin:0;">${targetNick}의 주식</h3>
+                            <button onclick="adminSearchUser()" style="padding:4px 8px;">뒤로</button>
+                        </div>
+                    `;
+
+                // Active Holdings
+                for (let code in pf) {
+                    const h = pf[code];
+                    const s = MARKET[code];
+                    const n = s ? s.n : code;
+                    html += `
+                            <div style="padding:8px; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight:700;">${n}</div>
+                                    <div style="font-size:12px; color:var(--text-sub);">${code} | ${h.qty}주</div>
+                                </div>
+                                <div style="display:flex; gap:4px;">
+                                    <input type="number" id="qty-${code}" value="${h.qty}" style="width:60px; padding:4px;">
+                                    <button onclick="adminSetStock('${targetUid}', '${targetNick}', '${code}')" style="background:var(--up-color); color:white; border:none; padding:4px;">설정</button>
+                                </div>
+                            </div>
+                        `;
+                }
+
+                // Add New Stock Section
+                html += `
+                        <div style="margin-top:20px; padding-top:10px; border-top:2px solid var(--card-border);">
+                            <h4>종목 추가/설정</h4>
+                            <div style="display:flex; gap:4px;">
+                                <input type="text" id="new-stock-code" placeholder="종목코드(예:005930)" style="flex:1; padding:4px;">
+                                <input type="number" id="new-stock-qty" placeholder="수량" style="width:60px; padding:4px;">
+                                <button onclick="adminSetNewStock('${targetUid}', '${targetNick}')" style="background:var(--primary); color:white; border:none; padding:4px 8px;">추가</button>
+                            </div>
+                            <div style="font-size:11px; color:var(--text-sub); margin-top:4px;">* 0개로 설정시 삭제됩니다.</div>
+                        </div>
+                    `;
+
+                resDiv.innerHTML = html;
+
+            } catch (e) {
+                resDiv.innerText = "Error: " + e.message;
+            }
+        }
+
+        async function adminSetStock(uid, nick, code) {
+            const qty = document.getElementById(`qty-${code}`).value;
+            if (qty === '') return;
+            // Send
+            await sendStockMail(uid, nick, code, parseInt(qty));
+        }
+
+        async function adminSetNewStock(uid, nick) {
+            const code = document.getElementById('new-stock-code').value.trim();
+            const qty = document.getElementById('new-stock-qty').value;
+
+            if (!code || qty === '') {
+                alert('코드와 수량을 입력하세요.');
+                return;
+            }
+            if (!MARKET[code]) {
+                if (!confirm('존재하지 않는 코드일 수 있습니다. 계속하시겠습니까?')) return;
+            }
+
+            await sendStockMail(uid, nick, code, parseInt(qty));
+            // Refresh view
+            setTimeout(() => adminViewStocks(uid, nick), 1000);
+        }
+
+        async function sendStockMail(uid, nick, code, qty) {
+            if (!confirm(`${nick} 님의 ${code} 수량을 ${qty}주로 설정하시겠습니까?`)) return;
+
+            try {
+                await db.collection('mail').add({
+                    to: uid,
+                    type: 'stock_set',
+                    code: code,
+                    qty: qty,
+                    ts: Date.now()
+                });
+                alert('주식 설정 메시지를 전송했습니다.');
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        async function adminDeleteUser(uid, nick) {
+            if (!confirm(`[경고] 정말로 ${nick} 님의 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+            if (!confirm(`다시 한번 확인합니다.\n${nick} 님의 계정을 영구적으로 삭제합니다.`)) return;
+
+            try {
+                // 1. Send Mail notification (Trigger Client Wipe)
+                await db.collection('mail').add({
+                    to: uid,
+                    type: 'account_delete',
+                    ts: Date.now()
+                });
+
+                // 2. Delete Firestore Data
+                await db.collection('ranking').doc(uid).delete();
+                await db.collection('users').doc(uid).delete();
+
+                alert(`${nick} 님의 계정을 삭제했습니다.`);
+                adminSearchUser(); // Refresh
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+
+    </script>
+</body>
+
+</html>

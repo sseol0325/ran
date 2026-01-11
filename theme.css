@@ -1,0 +1,163 @@
+:root {
+    /* Default Light Mode Variables */
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #e0e7ff;
+    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --bg-gradient: radial-gradient(circle at 0% 0%, #e0e7ff 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, #ffe4e6 0%, transparent 50%),
+        #f8fafc;
+    --card-bg: rgba(255, 255, 255, 0.65);
+    --card-border: rgba(255, 255, 255, 0.8);
+    --btn-bg: rgba(255, 255, 255, 0.5);
+    --btn-hover: rgba(255, 255, 255, 0.85);
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    --blur: blur(20px);
+    --icon-color: #1e293b;
+    /* Default icon color for light mode */
+    --callout-warn-bg: rgba(239, 68, 68, 0.1);
+    --callout-info-bg: rgba(59, 130, 246, 0.1);
+}
+
+/* Dark Mode Variables - Applied via media query OR .dark-mode class */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-gradient: radial-gradient(circle at 0% 0%, #1e1b4b 0%, transparent 50%),
+            radial-gradient(circle at 100% 100%, #312e81 0%, transparent 50%),
+            #0f172a;
+        --card-bg: rgba(30, 41, 59, 0.6);
+        --card-border: rgba(255, 255, 255, 0.1);
+        --btn-bg: rgba(255, 255, 255, 0.05);
+        --btn-hover: rgba(255, 255, 255, 0.1);
+        --text-main: #f1f5f9;
+        --text-sub: #94a3b8;
+        --primary-light: rgba(99, 102, 241, 0.25);
+        --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        --icon-color: #f1f5f9;
+        --callout-warn-bg: rgba(239, 68, 68, 0.2);
+        --callout-info-bg: rgba(59, 130, 246, 0.2);
+    }
+}
+
+/* Callouts (Warning / Info) */
+.callout {
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.callout.warn {
+    background: var(--callout-warn-bg);
+    color: #b91c1c;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.callout.info {
+    background: var(--callout-info-bg);
+    color: #1d4ed8;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+    .callout.warn {
+        color: #fca5a5;
+    }
+
+    .callout.info {
+        color: #93c5fd;
+    }
+}
+
+.callout .material-symbols-rounded {
+    flex-shrink: 0;
+    font-size: 20px;
+}
+
+/* Manual Dark Mode Override */
+body.dark-mode {
+    --bg-gradient: radial-gradient(circle at 0% 0%, #1e1b4b 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, #312e81 0%, transparent 50%),
+        #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.6);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --btn-bg: rgba(255, 255, 255, 0.05);
+    --btn-hover: rgba(255, 255, 255, 0.1);
+    --text-main: #f1f5f9;
+    --text-sub: #94a3b8;
+    --primary-light: rgba(99, 102, 241, 0.25);
+    --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    --icon-color: #f1f5f9;
+    --callout-warn-bg: rgba(239, 68, 68, 0.2);
+    --callout-info-bg: rgba(59, 130, 246, 0.2);
+}
+
+/* Manual Light Mode Override */
+body.light-mode {
+    --bg-gradient: radial-gradient(circle at 0% 0%, #e0e7ff 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, #ffe4e6 0%, transparent 50%),
+        #f8fafc;
+    --card-bg: rgba(255, 255, 255, 0.65);
+    --card-border: rgba(255, 255, 255, 0.8);
+    --btn-bg: rgba(255, 255, 255, 0.5);
+    --btn-hover: rgba(255, 255, 255, 0.85);
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --primary-light: #e0e7ff;
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    --icon-color: #1e293b;
+    --callout-warn-bg: rgba(239, 68, 68, 0.1);
+    --callout-info-bg: rgba(59, 130, 246, 0.1);
+}
+
+/* Theme Toggle Button Style */
+.theme-toggle {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--btn-bg);
+    border: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 100;
+    /* High z-index to stay on top */
+    color: var(--icon-color);
+    /* Use specific icon color variable */
+}
+
+.theme-toggle:hover {
+    background: var(--btn-hover);
+    transform: rotate(15deg);
+}
+
+.theme-toggle .material-symbols-rounded {
+    font-size: 24px;
+}
+
+/* Header-specific toggle positioning (overrides generic absolute) */
+header .theme-toggle {
+    top: 12px;
+    right: 16px;
+}
+
+@media (max-width: 600px) {
+    header .theme-toggle {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-left: 4px;
+        /* Ensure it fits in the flex flow */
+    }
+}

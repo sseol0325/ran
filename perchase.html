@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>란봇 | 초대하기</title>
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Pretendard Font -->
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+  <!-- Material Icons -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Shared Theme CSS -->
+  <link rel="stylesheet" href="theme.css">
+
+  <style>
+    /* Inline theme variables removed - using theme.css */
+
+    :root {
+      --header-h: 64px;
+      --header-bg: rgba(255, 255, 255, 0.95);
+      --product-bg: rgba(255, 255, 255, 0.7);
+      --tier-bg: rgba(255, 255, 255, 0.5);
+      --tier-border: rgba(0, 0, 0, 0.05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --header-bg: rgba(15, 23, 42, 0.95);
+        --product-bg: rgba(255, 255, 255, 0.05);
+        --tier-bg: rgba(255, 255, 255, 0.03);
+        --tier-border: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    body.dark-mode {
+      --header-bg: rgba(15, 23, 42, 0.95);
+      --product-bg: rgba(255, 255, 255, 0.05);
+      --tier-bg: rgba(255, 255, 255, 0.03);
+      --tier-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body.light-mode {
+      --header-bg: rgba(255, 255, 255, 0.95);
+      --product-bg: rgba(255, 255, 255, 0.7);
+      --tier-bg: rgba(255, 255, 255, 0.5);
+      --tier-border: rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-top: var(--header-h);
+    }
+
+    /* Background Animation Blob */
+    .bg-blob {
+      position: fixed;
+      top: -10%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      filter: blur(80px);
+      z-index: -1;
+      animation: float 20s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    .bg-blob-2 {
+      position: fixed;
+      bottom: -10%;
+      left: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%);
+      filter: blur(60px);
+      z-index: -1;
+      animation: float 15s infinite ease-in-out reverse;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(30px, 50px);
+      }
+    }
+
+    /* Sticky Glass Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--header-h);
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 100;
+      padding: 0 16px;
+      transition: background 0.3s;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-btn .material-symbols-rounded {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+      .nav-btn span:not(.material-symbols-rounded) {
+        display: none;
+      }
+
+      .nav-btn {
+        padding: 10px;
+        border-radius: 50%;
+      }
+
+      header {
+        justify-content: space-around;
+      }
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 10px 0 10px;
+      text-align: center;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+      line-height: 1.3;
+    }
+
+    .section-subtitle {
+      font-size: 15px;
+      color: var(--text-sub);
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    /* Important Notice Card */
+    .notice-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      /* Changed to flex-start for multi-line */
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.05);
+    }
+
+    .notice-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      /* Align with first line of text */
+    }
+
+    .notice-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    .notice-highlight {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .notice-link {
+      color: var(--text-sub);
+      text-decoration: underline;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+
+    /* Product Button Grid */
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 480px) {
+      .product-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .btn-product {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 20px;
+      border-radius: 20px;
+      background: var(--product-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-product:hover {
+      background: rgba(255, 255, 255, 0.95);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .btn-product:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary);
+      }
+    }
+
+    .btn-product:active {
+      transform: scale(0.98);
+    }
+
+    .btn-icon-wrapper {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      color: white;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-icon-wrapper .material-symbols-rounded {
+      font-size: 24px;
+    }
+
+    .btn-label {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .btn-price {
+      font-size: 14px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    /* Removed .tag-one-time as requested */
+
+    /* Gradients for icons */
+    .bg-green {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .bg-blue {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    .bg-purple {
+      background: linear-gradient(135deg, #a855f7, #9333ea);
+    }
+
+    .bg-indigo {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+    }
+
+    .bg-rose {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+    }
+
+    .bg-orange {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    /* Info Button (Full Width) */
+    .btn-full {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-full .btn-icon-wrapper {
+      margin-bottom: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Pricing Summary Card */
+    .summary-card h3 {
+      margin: 0 0 20px;
+      font-size: 19px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-main);
+    }
+
+    .tier-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .tier-item {
+      display: flex;
+      flex-direction: column;
+      background: var(--tier-bg);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--tier-border);
+    }
+
+    .tier-label {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .tier-price {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    /* --- CUSTOM MODAL --- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      width: 85%;
+      max-width: 320px;
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align: center;
+    }
+
+    .modal-overlay.show .modal-box {
+      transform: scale(1);
+    }
+
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .modal-icon span {
+      font-size: 32px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: var(--text-main);
+    }
+
+    .modal-desc {
+      font-size: 15px;
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin-bottom: 28px;
+      word-break: keep-all;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      transition: 0.2s;
+    }
+
+    .btn-cancel {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text-sub);
+    }
+
+    .btn-cancel:hover {
+      background: rgba(0, 0, 0, 0.12);
+      color: var(--text-main);
+    }
+
+    .btn-confirm {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-confirm:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Backgrounds -->
+  <div class="bg-blob"></div>
+  <div class="bg-blob-2"></div>
+
+  <!-- Header -->
+  <header>
+    <button id="home-btn" class="nav-btn"><span class="material-symbols-rounded">home</span><span>홈</span></button>
+    <button id="purchase-btn" class="nav-btn active"><span
+        class="material-symbols-rounded">shopping_cart</span><span>구매하기</span></button>
+    <button id="donate-btn" class="nav-btn"><span
+        class="material-symbols-rounded">workspace_premium</span><span>구독하기</span></button>
+    <button id="contact-btn" class="nav-btn"><span
+        class="material-symbols-rounded">support_agent</span><span>문의하기</span></button>
+
+    <!-- Theme Toggle (Positioned manually for fixed header) -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+      <span class="material-symbols-rounded theme-icon">dark_mode</span>
+    </button>
+  </header>
+
+  <div class="container">
+    <div class="section-title">채팅방 초대하기<br><span style="font-size:16px; font-weight:500; opacity:0.7;">(1회성 영구
+        구매)</span></div>
+
+    <!-- Important Notice: One-time payment -->
+    <div class="notice-card">
+      <div class="notice-icon"><span class="material-symbols-rounded">info</span></div>
+      <div class="notice-text">
+        이곳은 <b>란봇을 채팅방에 초대</b>하기 위한 1회성 결제 페이지입니다.<br>
+        <span style="font-size:13px; opacity:0.8; margin-top:4px; display:block;">
+          ✨ 생성형 AI(Gemini, GPT) 기능을 원하신다면 상단의
+          <a onclick="document.getElementById('donate-btn').click()"
+            style="text-decoration:underline; cursor:pointer; font-weight:700; color:var(--primary);">구독하기</a> 메뉴를
+          이용해주세요!
+        </span>
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="card product-grid">
+      <!-- Item 1 -->
+      <div class="btn-product" onclick="showCustomModal('free')">
+        <div class="btn-icon-wrapper bg-green"><span class="material-symbols-rounded">chat</span></div>
+        <div class="btn-label">일반 1:1 채팅</div>
+        <div class="btn-price">무료</div>
+      </div>
+      <!-- Item 2 -->
+      <div class="btn-product" onclick="confirmRedirect('group')">
+        <div class="btn-icon-wrapper bg-blue"><span class="material-symbols-rounded">groups</span></div>
+        <div class="btn-label">일반 그룹 채팅</div>
+        <div class="btn-price">3,000₩</div>
+      </div>
+      <!-- Item 3 -->
+      <div class="btn-product" onclick="confirmRedirect('open1')">
+        <div class="btn-icon-wrapper bg-purple"><span class="material-symbols-rounded">chat_bubble</span></div>
+        <div class="btn-label">오픈 1:1 채팅</div>
+        <div class="btn-price">2,000₩</div>
+      </div>
+      <!-- Item 4 -->
+      <div class="btn-product" onclick="confirmRedirect('opengroup')">
+        <div class="btn-icon-wrapper bg-indigo"><span class="material-symbols-rounded">diversity_3</span></div>
+        <div class="btn-label">오픈 그룹 채팅</div>
+        <div class="btn-price">인원별 상이</div>
+      </div>
+      <!-- Item 5 -->
+      <div class="btn-product" onclick="confirmRedirect('unblock')">
+        <div class="btn-icon-wrapper bg-rose"><span class="material-symbols-rounded">lock_open</span></div>
+        <div class="btn-label">차단 해제</div>
+        <div class="btn-price">5,000₩ ~</div>
+      </div>
+      <!-- Guide 1 -->
+      <div class="btn-product" onclick="showInfo('order')">
+        <div class="btn-icon-wrapper bg-green"><span class="material-symbols-rounded">receipt_long</span></div>
+        <div class="btn-label">주문 방법 안내</div>
+        <div class="btn-price" style="color:var(--primary);">터치하여 확인</div>
+      </div>
+
+      <!-- Caution (Full Width) -->
+      <div class="btn-product btn-full" onclick="showInfo('caution')">
+        <div class="btn-icon-wrapper bg-orange"><span class="material-symbols-rounded">warning</span></div>
+        <div>
+          <div class="btn-label">구매 전 주의사항 (필독)</div>
+          <div class="btn-price" style="color:#d97706;">환불 규정 및 이용 제한 안내</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Summary -->
+    <div class="card summary-card">
+      <h3><span class="material-symbols-rounded" style="color:var(--primary)">diversity_3</span>오픈 그룹 채팅 요금표</h3>
+      <div class="tier-list">
+        <div class="tier-item">
+          <div class="tier-label">50인 미만</div>
+          <div class="tier-price">5,000₩</div>
+        </div>
+        <div class="tier-item">
+          <div class="tier-label">100인 미만</div>
+          <div class="tier-price">10,000₩</div>
+        </div>
+        <div class="tier-item">
+          <div class="tier-label">200인 미만</div>
+          <div class="tier-price">20,000₩</div>
+        </div>
+        <div class="tier-item">
+          <div class="tier-label">200인 이상</div>
+          <div class="tier-price">30,000₩</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Custom Modal -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-icon"><span class="material-symbols-rounded" id="modal-icon-span">info</span></div>
+      <h3 class="modal-title" id="modal-title">알림</h3>
+      <p class="modal-desc" id="modal-desc">내용</p>
+      <div class="modal-actions" id="modal-actions">
+        <!-- Buttons injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Navigation
+    document.getElementById('home-btn').onclick = () => window.location.href = 'index.html';
+    document.getElementById('purchase-btn').onclick = () => window.location.href = 'perchase.html';
+    document.getElementById('donate-btn').onclick = () => window.location.href = 'sub.html';
+    document.getElementById('contact-btn').onclick = () => window.location.href = 'contact.html';
+
+    // Modal Logic
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc = document.getElementById('modal-desc');
+    const modalActions = document.getElementById('modal-actions');
+    const modalIconSpan = document.getElementById('modal-icon-span');
+
+    function openModal(title, desc, icon, buttons) {
+      modalTitle.textContent = title;
+      modalDesc.innerHTML = desc.replace(/\n/g, '<br>');
+      modalIconSpan.textContent = icon;
+      modalActions.innerHTML = '';
+
+      buttons.forEach(btn => {
+        const button = document.createElement('button');
+        button.className = `modal-btn ${btn.type === 'primary' ? 'btn-confirm' : 'btn-cancel'}`;
+        button.textContent = btn.text;
+        button.onclick = () => {
+          closeModal();
+          if (btn.onClick) btn.onClick();
+        };
+        modalActions.appendChild(button);
+      });
+
+      modalOverlay.classList.add('show');
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('show');
+    }
+
+    // 1. Free Chat Info
+    function showCustomModal(type) {
+      if (type === 'free') {
+        openModal(
+          '1:1 채팅 안내',
+          '카카오톡 검색창에 "란봇"을 검색하세요!\n모바일에서는 아래 버튼을 누르면 바로 연결돼요.',
+          'chat',
+          [
+            { text: '닫기', type: 'secondary' },
+            { text: '톡하러 가기', type: 'primary', onClick: () => window.location.href = 'http://qr.kakao.com/talk/hJqk8eOy_wtfdClCiqZ6p5_eAL4-' }
+          ]
+        );
+      }
+    }
+
+    // 2. Info / Caution
+    function showInfo(type) {
+      if (type === 'order') {
+        openModal(
+          '주문 방법',
+          '1. 원하는 상품명을 누르세요.\n2. 구매 오픈채팅방으로 이동합니다.\n3. 안내에 따라 진행해주세요.',
+          'receipt_long',
+          [{ text: '확인', type: 'primary' }]
+        );
+      } else if (type === 'caution') {
+        openModal(
+          '주의사항',
+          '• 악용 시 즉시 차단/탈퇴 조치됩니다.\n• 부적절한 사용 적발 시 차단됩니다.\n• 첫 재입장은 5,000원이며 이후 인상됩니다.',
+          'warning',
+          [{ text: '확인했습니다', type: 'primary' }]
+        );
+      }
+    }
+
+    // 3. Confirm Redirect
+    function confirmRedirect(type) {
+      openModal(
+        '구매 페이지로 이동',
+        '주의사항 및 환불 규정에 동의하시나요?\n동의 시 구매 오픈채팅방으로 연결됩니다.',
+        'shopping_cart_checkout',
+        [
+          { text: '취소', type: 'secondary' },
+          { text: '동의 및 이동', type: 'primary', onClick: () => window.location.href = 'https://open.kakao.com/o/gHt477Fg' }
+        ]
+      );
+    }
+
+    // Close modal on outside click
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+  </script>
+
+  <!-- Shared Theme JS -->
+  <script src="theme.js"></script>
+</body>
+
+</html>

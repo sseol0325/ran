@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>란봇 | AI Assistant</title>
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Pretendard Font (Korean Standard) -->
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+  <!-- Material Icons -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Shared Theme CSS -->
+  <link rel="stylesheet" href="theme.css">
+
+  <style>
+    /* Removed inline theme variables - now in theme.css */
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    /* Background Animation Blob */
+    .bg-blob {
+      position: fixed;
+      top: -10%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+      filter: blur(80px);
+      z-index: -1;
+      animation: float 20s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    .bg-blob-2 {
+      position: fixed;
+      bottom: -10%;
+      left: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
+      filter: blur(60px);
+      z-index: -1;
+      animation: float 15s infinite ease-in-out reverse;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(30px, 50px);
+      }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 40px 24px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Header Section */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      position: relative;
+    }
+
+    .logo-area {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: var(--primary-gradient);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+      color: white;
+      font-size: 32px;
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, var(--text-main) 30%, var(--primary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-sub);
+      font-weight: 500;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    /* Make the Profile button span full width for emphasis */
+    .col-span-2 {
+      grid-column: span 2;
+    }
+
+    /* Button Styles */
+    .btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--btn-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      cursor: pointer;
+      overflow: hidden;
+      font-weight: 600;
+      font-size: 15px;
+      user-select: none;
+      -webkit-user-select: none;
+      /* Safari */
+      touch-action: manipulation;
+    }
+
+    .btn:hover {
+      background: var(--btn-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Button Icon Wrapper */
+    .icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14px;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .btn:hover .icon-box {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .material-symbols-rounded {
+      font-size: 24px;
+      /* color: white;  <-- Removed to allow theme adaptation */
+    }
+
+    .btn-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .btn-label {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .btn-desc {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    /* Icon Background Colors - Subtle Sophistication */
+    .ic-purple {
+      background: linear-gradient(135deg, #a855f7, #9333ea);
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+    }
+
+    .ic-blue {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .ic-green {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .ic-orange {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+
+    .ic-pink {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+    }
+
+    .ic-rose {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+      box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+    }
+
+    .ic-indigo {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .ic-slate {
+      background: linear-gradient(135deg, #64748b, #475569);
+      box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+
+    /* Special Styling for Profile Button */
+    .btn-profile {
+      background: var(--card-border);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .btn-profile .btn-desc {
+      color: var(--primary);
+    }
+
+    /* Footer / Arrow hint */
+    .footer-hint {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Floating Decoration -->
+  <div class="bg-blob"></div>
+  <div class="bg-blob-2"></div>
+
+  <div class="container">
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+      <span class="material-symbols-rounded theme-icon">dark_mode</span>
+    </button>
+    <div class="header">
+      <div class="logo-area">
+        <span class="material-symbols-rounded" style="font-size: 36px;">smart_toy</span>
+      </div>
+      <h1 class="title">인공지능 비서, 란</h1>
+      <p class="subtitle">언제 어디서나 함께하는<br>당신만의 스마트한 파트너</p>
+    </div>
+
+
+
+    <div class="grid">
+      <!-- Profile: Full Width -->
+      <button id="profile-btn" class="btn btn-profile col-span-2">
+        <div class="icon-box ic-indigo">
+          <span class="material-symbols-rounded">account_circle</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label">란봇 프로필 바로가기</span>
+          <span class="btn-desc">지금 바로 대화를 시작해보세요</span>
+        </div>
+        <span class="material-symbols-rounded"
+          style="margin-left: auto; color: var(--text-sub); font-size: 20px;">arrow_forward_ios</span>
+      </button>
+
+      <!-- Game Hub: Full Width -->
+      <button id="game-btn" class="btn col-span-2"
+        style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(249, 115, 22, 0.1)); border-color: rgba(249, 115, 22, 0.3);">
+        <div class="icon-box ic-orange">
+          <span class="material-symbols-rounded">stadia_controller</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label" style="color: #ea580c;">란봇 게임 아케이드</span>
+          <span class="btn-desc">오목, 주식, 연애 시뮬레이션을 한곳에서! 🎮</span>
+        </div>
+        <span class="material-symbols-rounded"
+          style="margin-left: auto; color: #ea580c; font-size: 20px;">arrow_forward_ios</span>
+      </button>
+
+      <!-- Function -->
+      <button id="function-btn" class="btn">
+        <div class="icon-box ic-orange">
+          <span class="material-symbols-rounded">grid_view</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label">주요 기능</span>
+        </div>
+      </button>
+
+      <!-- Invite -->
+      <button id="price-btn" class="btn">
+        <div class="icon-box ic-green">
+          <span class="material-symbols-rounded">group_add</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label">초대하기</span>
+        </div>
+      </button>
+
+      <!-- Subscription -->
+      <button id="token-btn" class="btn">
+        <div class="icon-box ic-rose">
+          <span class="material-symbols-rounded">workspace_premium</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label">멤버십 구독</span>
+        </div>
+      </button>
+
+      <!-- Instagram -->
+      <button id="instar-btn" class="btn">
+        <div class="icon-box ic-pink">
+          <span class="material-symbols-rounded">photo_camera</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label">인스타그램</span>
+        </div>
+      </button>
+
+      <!-- Donate -->
+      <button id="donate-btn" class="btn">
+        <div class="icon-box ic-blue">
+          <span class="material-symbols-rounded">volunteer_activism</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label">후원하기</span>
+        </div>
+      </button>
+
+      <!-- Contact -->
+      <button id="contact-btn" class="btn">
+        <div class="icon-box ic-purple">
+          <span class="material-symbols-rounded">headset_mic</span>
+        </div>
+        <div class="btn-text">
+          <span class="btn-label">문의하기</span>
+        </div>
+      </button>
+
+      <!-- Policy (Full Width for layout balance) -->
+      <button id="law-btn" class="btn col-span-2" style="justify-content: center; padding: 12px;">
+        <span class="material-symbols-rounded"
+          style="color: var(--text-sub); font-size: 18px; margin-right: 6px;">policy</span>
+        <span class="btn-label" style="font-size: 13px; color: var(--text-sub); font-weight: 500;">서비스 운영정책 및
+          이용약관</span>
+      </button>
+
+    </div>
+
+    <div class="footer-hint">
+      <span>AI Ranbot</span> © 2025 All Rights Reserved.
+    </div>
+  </div>
+
+  <script>
+    // Ripple Effect for buttons (Touch feedback)
+    function createRipple(event) {
+      const button = event.currentTarget;
+      const circle = document.createElement("span");
+      const diameter = Math.max(button.clientWidth, button.clientHeight);
+      const radius = diameter / 2;
+
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${event.clientX - button.getBoundingClientRect().left - radius}px`;
+      circle.style.top = `${event.clientY - button.getBoundingClientRect().top - radius}px`;
+      circle.classList.add("ripple");
+
+      const ripple = button.getElementsByClassName("ripple")[0];
+      if (ripple) {
+        ripple.remove();
+      }
+
+      button.appendChild(circle);
+    }
+
+    // Adding styles for ripple via JS ensures it's self-contained
+    const style = document.createElement('style');
+    style.innerHTML = `
+      span.ripple {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        background-color: rgba(0, 0, 0, 0.05);
+        pointer-events: none;
+      }
+      @keyframes ripple {
+        to { transform: scale(4); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', createRipple);
+    });
+
+    // Navigation Links
+    document.getElementById('function-btn').onclick = () => window.location.href = 'function.html';
+    document.getElementById('price-btn').onclick = () => window.location.href = 'perchase.html';
+    document.getElementById('profile-btn').onclick = () => window.location.href = 'http://qr.kakao.com/talk/hJqk8eOy_wtfdClCiqZ6p5_eAL4-';
+    document.getElementById('game-btn').onclick = () => window.location.href = 'games.html';
+    document.getElementById('donate-btn').onclick = () => window.location.href = 'donate.html';
+    document.getElementById('contact-btn').onclick = () => window.location.href = 'contact.html';
+    document.getElementById('instar-btn').onclick = () => window.location.href = 'https://www.instagram.com/ran_kakao?igsh=MXY5dm95aXl4M3hwOQ%3D%3D&utm_source=qr';
+    document.getElementById('token-btn').onclick = () => window.location.href = 'sub.html';
+    document.getElementById('law-btn').onclick = () => window.location.href = 'law.html';
+  </script>
+
+  <!-- Shared Theme JS -->
+  <script src="theme.js"></script>
+</body>
+
+</html>

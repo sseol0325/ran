@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>란봇 | 운영정책</title>
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Pretendard Font -->
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+  <!-- Material Icons -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Shared Theme CSS -->
+  <link rel="stylesheet" href="theme.css">
+
+  <style>
+    /* Inline theme variables removed - using theme.css */
+    :root {
+      --header-h: 64px;
+      --header-bg: rgba(255, 255, 255, 0.95);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --header-bg: rgba(15, 23, 42, 0.95);
+      }
+    }
+
+    body.dark-mode {
+      --header-bg: rgba(15, 23, 42, 0.95);
+    }
+
+    body.light-mode {
+      --header-bg: rgba(255, 255, 255, 0.95);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-top: var(--header-h);
+    }
+
+    /* Background Animation Blob */
+    .bg-blob {
+      position: fixed;
+      top: -10%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      filter: blur(80px);
+      z-index: -1;
+      animation: float 20s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    .bg-blob-2 {
+      position: fixed;
+      bottom: -10%;
+      left: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%);
+      filter: blur(60px);
+      z-index: -1;
+      animation: float 15s infinite ease-in-out reverse;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(30px, 50px);
+      }
+    }
+
+    /* Sticky Glass Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--header-h);
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 100;
+      padding: 0 16px;
+      transition: background 0.3s;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-btn .material-symbols-rounded {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+      .nav-btn span:not(.material-symbols-rounded) {
+        display: none;
+      }
+
+      .nav-btn {
+        padding: 10px;
+        border-radius: 50%;
+      }
+
+      header {
+        justify-content: space-around;
+      }
+    }
+
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-title {
+      font-size: 26px;
+      font-weight: 800;
+      margin: 10px 0 10px;
+      text-align: center;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+    }
+
+    /* Table of Contents (TOC) */
+    .toc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .toc-card {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .toc-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .toc-link {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    .toc-link:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toc-link .material-symbols-rounded {
+      font-size: 18px;
+      color: var(--primary);
+    }
+
+    /* Content Cards */
+    .content-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: var(--blur);
+      scroll-margin-top: 80px;
+      /* Header offset */
+    }
+
+    .chapter-title {
+      font-size: 18px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      color: var(--primary);
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .article-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .article-item {
+      margin-bottom: 16px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-main);
+    }
+
+    .article-num {
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-right: 6px;
+    }
+
+    /* Nested List */
+    .article-sub {
+      margin-top: 8px;
+      padding-left: 14px;
+      border-left: 2px solid var(--primary-light);
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    /* Details / Summary */
+    details {
+      background: rgba(99, 102, 241, 0.05);
+      border: 1px solid rgba(99, 102, 241, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    summary {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: '+';
+      font-weight: 800;
+      color: var(--primary);
+      transition: transform 0.2s;
+    }
+
+    details[open] summary::after {
+      transform: rotate(45deg);
+    }
+
+    .details-content {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(99, 102, 241, 0.1);
+      font-size: 13px;
+      color: var(--text-sub);
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Scroll to Top */
+    .top-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-sub);
+      margin: 20px auto 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .top-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: translateY(-3px);
+    }
+
+    .footer-msg {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 20px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Backgrounds -->
+  <div class="bg-blob"></div>
+  <div class="bg-blob-2"></div>
+
+  <!-- Header -->
+  <header>
+    <button id="home-btn" class="nav-btn"><span class="material-symbols-rounded">home</span><span>홈</span></button>
+    <button id="purchase-btn" class="nav-btn"><span
+        class="material-symbols-rounded">shopping_cart</span><span>구매하기</span></button>
+    <button id="donate-btn" class="nav-btn"><span
+        class="material-symbols-rounded">workspace_premium</span><span>구독하기</span></button>
+    <button id="contact-btn" class="nav-btn"><span
+        class="material-symbols-rounded">support_agent</span><span>문의하기</span></button>
+
+    <!-- Theme Toggle -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+      <span class="material-symbols-rounded theme-icon">dark_mode</span>
+    </button>
+  </header>
+
+  <div class="container">
+    <div class="section-title">운영정책</div>
+
+    <!-- TOC Navigation -->
+    <nav class="toc-card">
+      <a href="#ch1" class="toc-link"><span class="material-symbols-rounded">bookmark</span>제1장 통칙</a>
+      <a href="#ch2" class="toc-link"><span class="material-symbols-rounded">verified_user</span>제2장 원칙</a>
+      <a href="#ch3" class="toc-link"><span class="material-symbols-rounded">shopping_bag</span>제3장 구매</a>
+      <a href="#ch4" class="toc-link"><span class="material-symbols-rounded">rule</span>제4장 규칙</a>
+    </nav>
+
+    <!-- Chapter 1 -->
+    <section id="ch1" class="content-card">
+      <h3 class="chapter-title"><span class="material-symbols-rounded">bookmark</span>제1장 통칙</h3>
+      <ul class="article-list">
+        <li class="article-item">
+          <span class="article-num">제1조</span>
+          란봇 운영정책은 란봇 서비스 영역에 대하여 적용된다.
+        </li>
+        <li class="article-item">
+          <span class="article-num">제2조</span>
+          그 외 란봇 운영정책에 별도의 언급이 없는 사항은 일반 상식선에서 기준을 따른다.
+        </li>
+      </ul>
+    </section>
+
+    <!-- Chapter 2 -->
+    <section id="ch2" class="content-card">
+      <h3 class="chapter-title"><span class="material-symbols-rounded">verified_user</span>제2장 란봇 운영 원칙</h3>
+      <ul class="article-list">
+        <li class="article-item">
+          <span class="article-num">제1조</span>
+          이용자 간 주고 받은 메시지에 대해서는 프라이버시 보호를 최우선으로 한다.
+          <div class="article-sub">
+            란봇은 이용자의 프라이버시를 침해하지 않기 위하여 일반채팅, 팀채팅, 비밀채팅 메시지에 대해서는 란봇 명령어와 관련 없는 채팅 내용을 일절 수집하지 않는다.
+          </div>
+        </li>
+        <li class="article-item">
+          <span class="article-num">제2조</span>
+          란봇 이용자 누구나 보거나 참여할 수 있는 서비스에 대해서는 보다 엄격한 기준을 적용한다.
+          <div class="article-sub">
+            란봇은 란GPT, API 파싱 명령어, 게임, GPT, Gemini 등 공용 서비스 영역에 대해서는 이용자 보호와 불법정보 유통 방지를 위하여 일반 명령어보다 엄격한 운영기준을 적용한다. 단,
+            채팅방 내 메시지나 게시물은 이용자 프라이버시 보호 원칙에 따라 신고된 내용에 한하여 판단한다.
+          </div>
+        </li>
+        <li class="article-item">
+          <span class="article-num">제3조</span>
+          서비스 이용제한은 최소한의 범위에 대해 단계적으로 적용함을 원칙으로 한다.
+          <div class="article-sub">
+            위반행위가 발생한 서비스 영역에 한하여 위반 사유 및 횟수에 따라 단계적으로 적용한다. 다만, 성범죄, 금융사기, 도박 등 명백한 불법행위 및 악의적인 서비스 이용행위에 대해서는 즉시 영구적으로
+            제한할 수 있다.
+          </div>
+        </li>
+        <li class="article-item">
+          <span class="article-num">제4조</span>
+          이용자의 목소리를 운영정책에 반영한다.
+          <div class="article-sub">
+            본 운영정책이 변경되는 경우 최소 7일 전에 공지사항을 통해 공지하도록 한다.
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Chapter 3 -->
+    <section id="ch3" class="content-card">
+      <h3 class="chapter-title"><span class="material-symbols-rounded">shopping_bag</span>제3장 란봇 구매</h3>
+      <ul class="article-list">
+        <li class="article-item">
+          <span class="article-num">제1조</span>
+          란봇 구매는 기본적으로 ‘카카오톡 오픈채팅 송금’으로만 이루어진다.
+        </li>
+        <li class="article-item">
+          <span class="article-num">제2조</span>
+          란봇이 채팅방에 입장한 이후로는 환불이 절대로 불가능하며, 단순변심으로 인한 환불도 불가능하다.
+        </li>
+        <li class="article-item">
+          <span class="article-num">제3조</span>
+          구독 서비스(GPT 등)를 구매 후 1회 이상 사용 시 환불이 불가능하다.
+        </li>
+        <li class="article-item">
+          <span class="article-num">제4조</span>
+          차단을 풀기 위한 란봇 첫 재입장은 5,000원이며, 그 후 추가 재입장은 전 가격의 두 배씩 인상한다.
+        </li>
+        <li class="article-item">
+          <span class="article-num">제5조</span>
+          히키방에는 절대 입장하지 않으며, 다른 방으로 이전하거나 환불 조치를 취한다.
+          <details>
+            <summary>※ ‘히키방’ 정의 자세히 보기</summary>
+            <div class="details-content">
+              태그에 히키, 우울, 정병 등의 문구가 포함되거나 구성원 특성상 개발자 판단 하에 위험이 높은 방을 의미함.
+            </div>
+          </details>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Chapter 4 -->
+    <section id="ch4" class="content-card">
+      <h3 class="chapter-title"><span class="material-symbols-rounded">rule</span>제4장 란봇 이용자 사용 규칙</h3>
+      <ul class="article-list">
+        <li class="article-item"><span class="article-num">제1조</span> 규칙 위반 시 언제든지 사용이 불가능할 수 있다.</li>
+        <li class="article-item"><span class="article-num">제2조</span> 도배 금지.</li>
+        <li class="article-item"><span class="article-num">제3조</span> 구독 서비스 악용(토큰 낭비 등) 시 해당 사용자의 이용을 금지할 수 있다.</li>
+        <li class="article-item"><span class="article-num">제4조</span> 비하, 성적, 비도덕적 표현 및 욕설 등은 즉시 차단된다.</li>
+        <li class="article-item"><span class="article-num">제5조</span> 악질적인 행위가 지속되거나 방 전체가 동조할 경우, 란봇은 해당 채팅방을 탈퇴할 수 있다.
+        </li>
+        <li class="article-item"><span class="article-num">제6조</span> 악용자 발견 시 신고 기능을 적극 사용한다.</li>
+        <li class="article-item"><span class="article-num">제7조</span> 방장 및 부방장은 악용자를 제재해야 하며, 방치 시 탈퇴할 수 있다.</li>
+        <li class="article-item"><span class="article-num">제8조</span> 상식적인 선에서의 이용은 자유롭게 보장된다.</li>
+        <li class="article-item"><span class="article-num">제9조</span> 란봇이 차단한 인원이 한 방에 2명 이상일 시, 란봇은 탈퇴한다.</li>
+      </ul>
+    </section>
+
+    <!-- Scroll to Top -->
+    <button onclick="window.scrollTo({top:0, behavior:'smooth'})" class="top-btn" aria-label="맨 위로">
+      <span class="material-symbols-rounded">arrow_upward</span>
+    </button>
+
+    <div class="footer-msg">
+      AI Ranbot © 2025 All Rights Reserved.
+    </div>
+
+  </div>
+
+  <script>
+    // Navigation Logic
+    document.getElementById('home-btn').onclick = () => window.location.href = 'index.html';
+    document.getElementById('purchase-btn').onclick = () => window.location.href = 'perchase.html';
+    document.getElementById('donate-btn').onclick = () => window.location.href = 'sub.html';
+    document.getElementById('contact-btn').onclick = () => window.location.href = 'contact.html';
+  </script>
+
+  <!-- Shared Theme JS -->
+  <script src="theme.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>란봇 | 후원자 목록</title>
+  <meta name="theme-color" content="#ffffff">
+
+  <!-- Pretendard Font -->
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+  <!-- Material Icons -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <!-- Shared Theme CSS -->
+  <link rel="stylesheet" href="theme.css">
+
+  <style>
+    /* Inline theme variables removed - using theme.css */
+    :root {
+      --header-h: 64px;
+      --header-bg: rgba(255, 255, 255, 0.95);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --header-bg: rgba(15, 23, 42, 0.95);
+      }
+    }
+
+    body.dark-mode {
+      --header-bg: rgba(15, 23, 42, 0.95);
+    }
+
+    body.light-mode {
+      --header-bg: rgba(255, 255, 255, 0.95);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-top: var(--header-h);
+    }
+
+    /* Background Animation Blob */
+    .bg-blob {
+      position: fixed;
+      top: -10%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      filter: blur(80px);
+      z-index: -1;
+      animation: float 20s infinite ease-in-out;
+      pointer-events: none;
+    }
+
+    .bg-blob-2 {
+      position: fixed;
+      bottom: -10%;
+      left: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%);
+      filter: blur(60px);
+      z-index: -1;
+      animation: float 15s infinite ease-in-out reverse;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(30px, 50px);
+      }
+    }
+
+    /* Header */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--header-h);
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 100;
+      padding: 0 16px;
+      transition: background 0.3s;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .nav-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-btn .material-symbols-rounded {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+      .nav-btn span:not(.material-symbols-rounded) {
+        display: none;
+      }
+
+      .nav-btn {
+        padding: 10px;
+        border-radius: 50%;
+      }
+
+      header {
+        justify-content: space-around;
+      }
+    }
+
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+    }
+
+    /* Info Card (Criteria) */
+    .info-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .info-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .info-list {
+      padding-left: 20px;
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+
+    .info-footer {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 12px;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    /* Hall of Fame (Top 3) */
+    .hof-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    @media (min-width: 600px) {
+      .hof-grid {
+        grid-template-columns: repeat(3, 1fr);
+        align-items: end;
+        /* Align bottom to emphasize 1st place height if needed */
+      }
+
+      /* Reorder for visual hierarchy on desktop: 2 - 1 - 3 */
+      .hof-card:nth-child(1) {
+        order: 2;
+        transform: scale(1.05);
+        z-index: 2;
+      }
+
+      .hof-card:nth-child(2) {
+        order: 1;
+      }
+
+      .hof-card:nth-child(3) {
+        order: 3;
+      }
+    }
+
+    .hof-card {
+      position: relative;
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Medal Styles */
+    .medal-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .hof-rank {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    .hof-name {
+      font-size: 20px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .hof-amount {
+      font-size: 16px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(0, 0, 0, 0.15);
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    /* Gold */
+    .hof-card.gold {
+      background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+      box-shadow: 0 10px 30px rgba(253, 185, 49, 0.3);
+      border: 1px solid rgba(255, 215, 0, 0.5);
+    }
+
+    .hof-card.gold .hof-rank {
+      color: #92400e;
+    }
+
+    /* Dark gold text */
+
+    /* Silver */
+    .hof-card.silver {
+      background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%);
+      box-shadow: 0 10px 30px rgba(189, 189, 189, 0.3);
+      border: 1px solid rgba(224, 224, 224, 0.5);
+    }
+
+    .hof-card.silver .hof-rank {
+      color: #525252;
+    }
+
+    /* Bronze */
+    .hof-card.bronze {
+      background: linear-gradient(135deg, #f29d7e 0%, #c96a53 100%);
+      box-shadow: 0 10px 30px rgba(201, 106, 83, 0.3);
+      border: 1px solid rgba(242, 157, 126, 0.5);
+    }
+
+    .hof-card.bronze .hof-rank {
+      color: #451a03;
+    }
+
+    /* Regular Donor Grid */
+    .donor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      /* Responsive */
+      gap: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .donor-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .donor-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: transform 0.2s;
+    }
+
+    .donor-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .rank-badge {
+      width: 32px;
+      height: 32px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .donor-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .donor-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .donor-amount {
+      font-size: 13px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .footer-msg {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 20px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Backgrounds -->
+  <div class="bg-blob"></div>
+  <div class="bg-blob-2"></div>
+
+  <!-- Header -->
+  <header>
+    <button id="home-btn" class="nav-btn"><span class="material-symbols-rounded">home</span><span>홈</span></button>
+    <button id="donate-btn" class="nav-btn"><span
+        class="material-symbols-rounded">volunteer_activism</span><span>후원하기</span></button>
+    <button id="back-btn" class="nav-btn"><span
+        class="material-symbols-rounded">arrow_back</span><span>뒤로가기</span></button>
+
+    <!-- Theme Toggle -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+      <span class="material-symbols-rounded theme-icon">dark_mode</span>
+    </button>
+  </header>
+
+  <div class="container">
+
+    <!-- Info Section -->
+    <div class="info-card">
+      <div class="info-header"><span class="material-symbols-rounded">verified</span>후원자 선정 기준</div>
+      <ul class="info-list">
+        <li>입장권/구독권 가격과 일치하지 않는 경우</li>
+        <li>입금 후 24시간 내 요청이 없는 경우</li>
+        <li>순수 후원 의사를 밝히신 경우</li>
+      </ul>
+      <div class="info-footer">란봇의 발전을 위해 마음을 모아주신 모든 분들께 진심으로 감사드립니다. 💖</div>
+    </div>
+
+    <!-- Hall of Fame -->
+    <div class="section-title"><span class="material-symbols-rounded" style="color:#fbbf24">emoji_events</span>명예의 전당
+      (Top 3)</div>
+    <div class="hof-grid">
+      <!-- 1st Place -->
+      <div class="hof-card gold">
+        <div class="hof-rank">1st Place</div>
+        <div class="medal-icon">👑</div>
+        <div class="hof-name">도망</div>
+        <div class="hof-amount">300,000 ₩</div>
+      </div>
+      <!-- 2nd Place -->
+      <div class="hof-card silver">
+        <div class="hof-rank">2nd Place</div>
+        <div class="medal-icon">🥈</div>
+        <div class="hof-name">나폴</div>
+        <div class="hof-amount">144,444 ₩</div>
+      </div>
+      <!-- 3rd Place -->
+      <div class="hof-card bronze">
+        <div class="hof-rank">3rd Place</div>
+        <div class="medal-icon">🥉</div>
+        <div class="hof-name">콜라</div>
+        <div class="hof-amount">50,000 ₩</div>
+      </div>
+    </div>
+
+    <!-- Full Ranking -->
+    <div class="section-title"><span class="material-symbols-rounded">format_list_numbered</span>전체 후원자 랭킹</div>
+    <div class="donor-grid" id="donor-list">
+      <!-- Donors will be populated here -->
+      <!-- Pre-filled static list for SEO/No-JS, script below can also generate -->
+      <div class="donor-card"><span class="rank-badge">4</span>
+        <div class="donor-info"><span class="donor-name">무적</span><span class="donor-amount">31,000 ₩</span></div>
+      </div>
+      <div class="donor-card"><span class="rank-badge">5</span>
+        <div class="donor-info"><span class="donor-name">민트</span><span class="donor-amount">30,300 ₩</span></div>
+      </div>
+      <div class="donor-card"><span class="rank-badge">6</span>
+        <div class="donor-info"><span class="donor-name">디스라이크</span><span class="donor-amount">30,000 ₩</span></div>
+      </div>
+      <div class="donor-card"><span class="rank-badge">7</span>
+        <div class="donor-info"><span class="donor-name">SOPPM</span><span class="donor-amount">27,500 ₩</span></div>
+      </div>
+      <div class="donor-card"><span class="rank-badge">8</span>
+        <div class="donor-info"><span class="donor-name">진통</span><span class="donor-amount">27,000 ₩</span></div>
+      </div>
+      <div class="donor-card"><span class="rank-badge">9</span>
+        <div class="donor-info"><span class="donor-name">라은</span><span class="donor-amount">23,456 ₩</span></div>
+      </div>
+      <div class="donor-card"><span class="rank-badge">10</span>
+        <div class="donor-info"><span class="donor-name">사노바</span><span class="donor-amount">23,000 ₩</span></div>
+      </div>
+      <!-- ... Rest of the list managed by script for cleaner code ... -->
+    </div>
+
+    <div class="footer-msg">
+      AI Ranbot © 2025 All Rights Reserved.
+    </div>
+
+  </div>
+
+  <script>
+    // Navigation
+    document.getElementById('home-btn').onclick = () => window.location.href = 'index.html';
+    document.getElementById('donate-btn').onclick = () => window.location.href = 'donate.html'; // Changed link to donate.html main page
+    document.getElementById('back-btn').onclick = () => window.location.href = 'donate.html';
+
+    // Donor Data (Rank 4 ~ 50)
+    const donors = [
+      { rank: 4, name: "무적", amount: "31,000" },
+      { rank: 5, name: "민트", amount: "30,300" },
+      { rank: 6, name: "디스라이크", amount: "30,000" },
+      { rank: 7, name: "SOPPM", amount: "27,500" },
+      { rank: 8, name: "진통", amount: "27,000" },
+      { rank: 9, name: "라은", amount: "23,456" },
+      { rank: 10, name: "사노바", amount: "23,000" },
+      { rank: 11, name: "아기💖", amount: "20,523" },
+      { rank: 12, name: "증오", amount: "20,100" },
+      { rank: 13, name: "아방가르드", amount: "20,000" },
+      { rank: 14, name: "숑숑이상하다", amount: "15,101" },
+      { rank: 15, name: "하남자", amount: "15,000" },
+      { rank: 16, name: "혀니", amount: "12,820" },
+      { rank: 17, name: "광안리좋아", amount: "12,000" },
+      { rank: 18, name: "평화", amount: "10,012" },
+      { rank: 19, name: "노소영", amount: "10,010" },
+      { rank: 20, name: "3000", amount: "10,000" },
+      { rank: 21, name: "시시", amount: "10,000" },
+      { rank: 22, name: "카푸어오라이방", amount: "10,000" },
+      { rank: 23, name: "큐펭", amount: "10,000" },
+      { rank: 24, name: "똑똑한라마", amount: "10,000" },
+      { rank: 25, name: "로똥", amount: "10,000" },
+      { rank: 26, name: "내빵댕을봐줘서", amount: "10,000" },
+      { rank: 27, name: "조은우", amount: "10,000" },
+      { rank: 28, name: "시노부", amount: "6,000" },
+      { rank: 29, name: "임시로", amount: "6,000" },
+      { rank: 30, name: "삽그지카푸어", amount: "5,230" },
+      { rank: 31, name: "배재순아님", amount: "5,002" },
+      { rank: 32, name: "야찐", amount: "5,000" },
+      { rank: 33, name: "무기력", amount: "5,000" },
+      { rank: 34, name: "내사랑세민오빠", amount: "5,000" },
+      { rank: 35, name: "숭늉이", amount: "5,000" },
+      { rank: 36, name: "똑똑한비둘기", amount: "5,000" },
+      { rank: 37, name: "너무쁨", amount: "5,000" },
+      { rank: 38, name: "나루토", amount: "5,000" },
+      { rank: 39, name: "치마두른남자", amount: "5,000" },
+      { rank: 40, name: "두부", amount: "5,000" },
+      { rank: 41, name: "인간실격", amount: "5,000" },
+      { rank: 42, name: "죠퀴벌레", amount: "5,000" },
+      { rank: 43, name: "다욧킹", amount: "4,000" },
+      { rank: 44, name: "히키천국", amount: "3,711" },
+      { rank: 45, name: "박진석", amount: "3,700" },
+      { rank: 46, name: "랜시", amount: "3,000" },
+      { rank: 47, name: "킹현", amount: "3,000" },
+      { rank: 48, name: "강다영", amount: "3,000" },
+      { rank: 49, name: "조퀴의 검(허접mk523)", amount: "3,000" },
+      { rank: 50, name: "펩제라임", amount: "3,000" },
+    ];
+
+    // Populate List
+    const listContainer = document.getElementById('donor-list');
+    listContainer.innerHTML = ''; // Clear initial
+
+    donors.forEach(d => {
+      const card = document.createElement('div');
+      card.className = 'donor-card';
+      card.innerHTML = `
+        <span class="rank-badge">${d.rank}</span>
+        <div class="donor-info">
+          <span class="donor-name">${d.name}</span>
+          <span class="donor-amount">${d.amount} ₩</span>
+        </div>
+      `;
+      listContainer.appendChild(card);
+    });
+
+  </script>
+
+  <!-- Shared Theme JS -->
+  <script src="theme.js"></script>
+</body>
+
+</html>
+```

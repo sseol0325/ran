@@ -1,0 +1,25 @@
+body {
+    background-color: #111;
+    color: #fff;
+}
+
+.button {
+    background-color: #222;
+    color: #fff;
+}
+
+.button.function-btn {
+    background-color: #ff9800;
+}
+
+.button.price-btn {
+    background-color: #4caf50;
+}
+
+.button.donate-btn {
+    background-color: #006cc4;
+}
+
+.button.contact-btn {
+    background-color: #9c27b0;
+}
