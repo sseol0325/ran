@@ -170,11 +170,11 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        // --- PHYSICS CONFIG (EXTREME) ---
-        const GRAVITY = 1.5; // Snappier fall
-        const JUMP_POWER = -26; // Stronger jump to compensate gravity
-        const DOUBLE_JUMP_POWER = -20;
-        const SPEED_START = 20; // START VERY FAST
+        // --- PHYSICS CONFIG (ULTIMATE) ---
+        const GRAVITY = 2.0; // Heavy Gravity
+        const JUMP_POWER = -30; // Powerful Jump
+        const DOUBLE_JUMP_POWER = -25;
+        const SPEED_START = 24; // INSANE SPEED
 
         // --- GAME VARIABLES ---
         let speed = SPEED_START;
@@ -184,7 +184,51 @@
         let frame = 0;
         let hp = 100;
         let bgOffset = 0;
-        let warningTimer = 0; // For missile warning
+        let warningTimer = 0;
+        let loopId = null; // Fix for double-loop bug
+
+        // ... [ENTITIES array stays same] ...
+
+        // ... [INIT & RESIZE defined below] ...
+
+        function resetGame() {
+            if (loopId) cancelAnimationFrame(loopId); // Prevent double loops
+
+            obstacles = [];
+            items = [];
+            particles = [];
+            score = 0;
+            hp = 100;
+            speed = SPEED_START;
+            frame = 0;
+
+            player.y = player.groundY;
+            player.vy = 0;
+            player.state = 'run';
+            player.jumpCount = 0;
+
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('tutorial-msg').style.display = 'none';
+
+            isRunning = true;
+            isPaused = false;
+            loop(); // Start loop
+        }
+
+        function togglePause() {
+            if (!isRunning) return;
+            isPaused = !isPaused;
+            if (!isPaused) loop();
+        }
+
+        function loop() {
+            if (!isRunning) return;
+            if (isPaused) return;
+
+            update();
+            draw();
+            loopId = requestAnimationFrame(loop);
+        }
 
         // --- ENTITIES ---
         let player = {
