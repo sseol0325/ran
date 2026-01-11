@@ -174,7 +174,7 @@
         const GRAVITY = 0.9;
         const JUMP_POWER = -22; // Much Higher Jump
         const DOUBLE_JUMP_POWER = -18;
-        const SPEED_START = 8;
+        const SPEED_START = 13; // Increased from 8 to 13
 
         // --- GAME VARIABLES ---
         let speed = SPEED_START;
@@ -273,7 +273,7 @@
         function update() {
             frame++;
             // Harder Difficulty Scaling: Speed cap increased to 35, faster acceleration
-            speed = Math.min(35, SPEED_START + frame * 0.003);
+            speed = Math.min(35, SPEED_START + frame * 0.005); // Faster accel (0.003 -> 0.005)
             bgOffset += speed * 0.5;
             player.runFrame += 0.2 + (speed - SPEED_START) * 0.01; // Animated faster with speed
 
