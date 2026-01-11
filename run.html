@@ -294,7 +294,6 @@
                     player.isGrounded = true;
                     player.jumpCount = 0;
                     if (player.state === 'jump') player.state = 'run';
-                    if (player.state === 'run' && inputActive) { /* maintain run */ }
                 }
             } else {
                 player.isGrounded = false;
