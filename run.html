@@ -808,10 +808,31 @@
         });
 
         // Touch / Mouse Support
+        // --- MOBILE CONTROLS (SPLIT SCREEN) ---
+        // Left Half: Slide (Hold)
+        // Right Half: Jump (Tap)
+
         document.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent scroll
-            handleInput('jump');
+            e.preventDefault(); // Prevent scrolling/zooming
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.clientX < window.innerWidth / 2) {
+                    handleInput('slide_down');
+                } else {
+                    handleInput('jump');
+                }
+            }
         }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.clientX < window.innerWidth / 2) {
+                    handleInput('slide_up');
+                }
+            }
+        });
 
         document.addEventListener('mousedown', (e) => {
             handleInput('jump');
