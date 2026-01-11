@@ -863,20 +863,78 @@
         // ...
 
         // --- RANKING CLEANUP TOOL ---
+        // --- RANKING CLEANUP TOOL ---
         async function cleanDuplicates() {
-            if (!db) return;
-            const password = prompt("관리자 비밀번호를 입력하세요 (이 기능을 실행하면 중복 기록이 삭제됩니다)"); // Removed default "1234"
+            if (!db) return alert("데이터베이스 연결 실패");
+            // const password = prompt("관리자 비밀번호를 입력하세요 (이 기능을 실행하면 중복 기록이 삭제됩니다)");
+            // if (password !== "1234") return alert("비밀번호가 틀렸습니다.");
+
+            // Password removed per user request (or handle it gracefully)
+            // But wait, user earlier said "password is pre-filled, remove it".
+            // Then later user said "remove pre-filled 1234".
+            // I will use prompt without default value.
+            const password = prompt("관리자 비밀번호를 입력하세요");
             if (password !== "1234") return alert("비밀번호가 틀렸습니다.");
 
             if (!confirm("정말로 랭킹 중복을 정리하시겠습니까?\n모든 플레이어의 최고 점수 1개만 남기고 나머지는 삭제됩니다.")) return;
 
-            // ... (rest same)
+            const targets = [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')];
+            targets.forEach(el => { if (el) el.innerHTML = "<div style='text-align:center;'>정리 중...</div>"; });
+
+            try {
+                const snapshot = await db.collection('ranrun_scores').get();
+                const bestScores = {};
+                const batch = db.batch();
+
+                // 1. Find Best Scores
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const name = data.name;
+                    if (!name) return; // Skip invalid
+
+                    if (!bestScores[name] || data.score > bestScores[name].score) {
+                        bestScores[name] = {
+                            name: name,
+                            score: data.score
+                        };
+                    }
+                    batch.delete(doc.ref);
+                });
+
+                // 2. Re-save Best Scores
+                for (const name in bestScores) {
+                    const data = bestScores[name];
+                    const ref = db.collection('ranrun_scores').doc(name);
+                    batch.set(ref, {
+                        name: data.name,
+                        score: data.score,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                await batch.commit();
+                alert("정리 완료! 중복된 랭킹이 제거되었습니다.");
+                loadRankings();
+
+            } catch (err) {
+                console.error(err);
+                alert("오류 발생: " + err.message);
+                loadRankings();
+            }
         }
 
         function loadRankings() {
-            if (!db) return;
-            // Update BOTH leaderboards
             const targets = [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')];
+
+            if (!db) {
+                targets.forEach(el => {
+                    if (el) el.innerHTML = "<div style='text-align:center; color:#ff6666; font-size:14px;'>데이터베이스 연결 실패<br>(인터넷 확인 필요)</div>";
+                });
+                return;
+            }
+
+            // Update BOTH leaderboards
+
 
             targets.forEach(el => {
                 if (el) el.innerHTML = "<div style='text-align:center;'>순위 로딩 중...</div>";
