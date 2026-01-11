@@ -335,7 +335,44 @@
             }
         }
 
-        // ... duplicates removed ...
+        // --- GAME LOOP ---
+        function loop() {
+            if (!isRunning) return;
+
+            if (!isPaused) {
+                update();
+            }
+            draw();
+
+            if (isRunning) {
+                loopId = requestAnimationFrame(loop);
+            }
+        }
+
+        // --- RESET GAME ---
+        function resetGame() {
+            if (loopId) cancelAnimationFrame(loopId);
+
+            isRunning = true;
+            isPaused = false;
+            score = 0;
+            frame = 0;
+            hp = 100;
+            bgOffset = 0;
+            speed = SPEED_START;
+
+            player.y = player.groundY;
+            player.vy = 0;
+            player.state = 'run';
+            player.isGrounded = true;
+
+            obstacles = [];
+            items = [];
+            particles = [];
+
+            // Start Loop
+            loop();
+        }
 
         function update() {
             frame++;
