@@ -819,7 +819,11 @@
         // Right Half: Slide (Hold)
 
         document.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent scrolling/zooming
+            // IGNORE touches on buttons (Pause, Retry, Exit) so they can click
+            if (e.target.closest('button')) return;
+
+            e.preventDefault(); // Prevent scrolling/zooming for game control
+
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 if (t.clientX < window.innerWidth / 2) {
@@ -831,6 +835,8 @@
         }, { passive: false });
 
         document.addEventListener('touchend', (e) => {
+            if (e.target.closest('button')) return;
+
             e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
@@ -841,6 +847,8 @@
         });
 
         document.addEventListener('mousedown', (e) => {
+            // Allow mouse interaction with buttons
+            if (e.target.closest('button')) return;
             handleInput('jump');
         });
 
