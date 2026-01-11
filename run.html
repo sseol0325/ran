@@ -327,7 +327,77 @@
             }
         }
 
-        // ... [spawnItems and checkCollisions stay mostly same, maybe update hitboxes] ...
+        // ... [spawnObstacle above] ...
+
+        function spawnItems(x, y) {
+            for (let i = 0; i < 3; i++) {
+                if (Math.random() > 0.5) continue;
+                items.push({
+                    x: x + i * 50, y: y, w: 30, h: 30,
+                    type: Math.random() < 0.1 ? 'potion' : (Math.random() < 0.3 ? 'jelly' : 'coin')
+                });
+            }
+        }
+
+        function jump() {
+            if (player.isGrounded) {
+                player.vy = JUMP_POWER;
+                player.state = 'jump';
+                player.isGrounded = false;
+                player.jumpCount = 1;
+                createDust(player.x, player.y + 80);
+            } else if (player.jumpCount < 2) {
+                player.vy = DOUBLE_JUMP_POWER;
+                player.jumpCount = 2;
+                createSparkle(player.x, player.y + 40, '#fff');
+            }
+        }
+
+        function checkCollisions() {
+            const p = {
+                x: player.x + 15, y: player.y + 10,
+                w: player.w - 30, h: player.state === 'slide' ? 30 : player.h - 10
+            };
+
+            obstacles.forEach(o => {
+                if (o.hit) return;
+                let oRect = { x: o.x, y: o.y, w: o.w, h: o.h };
+                if (intersect(p, oRect)) {
+                    o.hit = true;
+                    takeDamage();
+                }
+            });
+
+            items.forEach(i => {
+                const iRect = { x: i.x - 10, y: i.y - 10, w: i.w + 20, h: i.h + 20 };
+                if (intersect(p, iRect)) {
+                    i.collected = true;
+                    if (i.type === 'coin') score += 100;
+                    if (i.type === 'jelly') score += 200;
+                    if (i.type === 'potion') { hp = Math.min(100, hp + 20); createSparkle(player.x, player.y, '#f0f'); }
+                    createSparkle(i.x, i.y, '#ff0');
+                }
+            });
+        }
+
+        function intersect(r1, r2) {
+            return !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x || r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
+        }
+
+        function takeDamage() {
+            if (player.state === 'hurt') return;
+            hp -= 20;
+            player.state = 'hurt';
+            player.vy = -8;
+            canvas.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+            setTimeout(() => { canvas.style.transform = 'none'; if (hp > 0) player.state = 'run'; }, 500);
+        }
+
+        function gameOver() {
+            isRunning = false;
+            document.getElementById('final-score').innerText = Math.floor(score);
+            document.getElementById('game-over').style.display = 'flex';
+        }
 
         // ... [drawObstacle needs major update] ...
         function drawObstacle(o) {
