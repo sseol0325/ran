@@ -344,9 +344,9 @@
         }
 
         function spawnMissile() {
-            // Warning Effect could be added here, currently just spawn far out
+            // Missile at Head Level (Must Slide/Jump)
             obstacles.push({
-                x: canvas.width + 200, y: player.groundY - 60,
+                x: canvas.width + 200, y: player.groundY + 10,
                 w: 80, h: 30,
                 type: 'missile',
                 warning: true
@@ -388,7 +388,8 @@
                     });
                 } else {
                     // Bat (Air) - tricky height
-                    let heights = [ground - 60, ground - 120];
+                    // Heights: ground+10 (Head level - slide/jump), ground-50 (Jump catch)
+                    let heights = [ground + 10, ground - 50];
                     obstacles.push({
                         x: x, y: heights[Math.floor(Math.random() * 2)],
                         w: 50, h: 40,
@@ -396,9 +397,9 @@
                     });
                 }
             } else {
-                // Hanging Wall (Slide) - Raised higher for safe slide
+                // Hanging Wall (Slide) - Lowered to force slide
                 obstacles.push({
-                    x: x, y: ground - 100, // Raised to -100 (gap 20px above head)
+                    x: x, y: ground - 50, // Range: ground-50 to ground+30. Player Slide Top: ground+40. SAFE.
                     w: 60, h: 80,
                     type: 'hanging'
                 });
