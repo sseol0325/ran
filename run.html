@@ -186,7 +186,89 @@
         let bgOffset = 0;
         let warningTimer = 0; // For missile warning
 
-        // ... [ENTITIES array stays same] ...
+        // --- ENTITIES ---
+        let player = {
+            x: 100, y: 0, w: 60, h: 80, vy: 0,
+            state: 'run',
+            groundY: 0,
+            isGrounded: false,
+            jumpCount: 0,
+            runFrame: 0
+        };
+
+        let obstacles = [];
+        let items = [];
+        let particles = [];
+
+        // --- INIT & LOOP ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.groundY = canvas.height - 180;
+            if (!isRunning) player.y = player.groundY;
+        }
+        window.addEventListener('resize', resize);
+
+        function init() {
+            resize();
+            player.y = player.groundY;
+
+            // Add Global Interaction Listener
+            ['mousedown', 'touchstart', 'keydown'].forEach(evt =>
+                window.addEventListener(evt, () => {
+                    if (!isRunning && document.getElementById('game-over').style.display === 'none') {
+                        // Only start if not game over and not running
+                        startFirst();
+                    }
+                }, { once: true })
+            );
+
+            if (frame === 0 && !isRunning) {
+                // Initial render helper
+                // draw() might not be defined yet if hoisted, but loop calls it. 
+                // We'll trust the order or that draw is hoisted.
+                requestAnimationFrame(draw);
+            }
+        }
+
+        function resetGame() {
+            obstacles = [];
+            items = [];
+            particles = [];
+            score = 0;
+            hp = 100;
+            speed = SPEED_START;
+            frame = 0;
+
+            player.y = player.groundY;
+            player.vy = 0;
+            player.state = 'run';
+            player.jumpCount = 0;
+
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('tutorial-msg').style.display = 'none';
+
+            isRunning = true;
+            isPaused = false;
+            requestAnimationFrame(loop);
+        }
+
+        function togglePause() {
+            if (!isRunning) return;
+            isPaused = !isPaused;
+            if (!isPaused) requestAnimationFrame(loop);
+        }
+
+        function loop() {
+            if (!isRunning) {
+                return;
+            }
+            if (isPaused) return;
+
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
 
         function update() {
             frame++;
@@ -399,7 +481,144 @@
             document.getElementById('game-over').style.display = 'flex';
         }
 
-        // ... [drawObstacle needs major update] ...
+        // --- DRAWING ---
+        function draw() {
+            ctx.fillStyle = '#AEE4FF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawBackground();
+
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, player.groundY + 80, canvas.width, canvas.height);
+            ctx.fillStyle = '#7CFC00';
+            ctx.beginPath();
+            ctx.moveTo(0, player.groundY + 80);
+            for (let i = 0; i < canvas.width; i += 20) {
+                ctx.lineTo(i + 10, player.groundY + 70 + Math.sin(i + bgOffset) * 5);
+                ctx.lineTo(i + 20, player.groundY + 80);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.fill();
+
+            obstacles.forEach(drawObstacle);
+            items.forEach(drawItem);
+            drawPlayer();
+
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+            });
+        }
+
+        function drawBackground() {
+            ctx.fillStyle = '#90EE90';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            for (let i = 0; i <= canvas.width; i += 100) {
+                let y = player.groundY - 50 + Math.sin((i + bgOffset * 0.2) * 0.01) * 50;
+                ctx.lineTo(i, y);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.fill();
+        }
+
+        function drawPlayer() {
+            ctx.save();
+
+            // Center point
+            let cx = player.x + player.w / 2;
+            let cy = player.y + player.h / 2;
+
+            // Slide Adjustment: Lower the center visually to align with ground
+            if (player.state === 'slide') {
+                cy += 20; // Push down to ground
+            }
+
+            ctx.translate(cx, cy);
+
+            if (player.state === 'hurt') ctx.globalAlpha = 0.5;
+
+            // --- CHARACTER: BLACK HAIR / BLUE DRESS ---
+            let bob = Math.sin(player.runFrame) * 3;
+            if (player.state !== 'run') bob = 0;
+            if (player.state === 'jump') bob = -5;
+
+            // Rotate for Slide (Lying down)
+            if (player.state === 'slide') {
+                ctx.rotate(-Math.PI / 2); // -90 degrees
+                bob = 0;
+            }
+
+            // 1. Hair (Back) - Black
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(0, -25 + bob, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. Body / Dress - Blue
+            ctx.fillStyle = '#2563eb';
+            ctx.beginPath();
+            ctx.moveTo(0, -10 + bob);
+            ctx.lineTo(-15, 30 + bob);
+            ctx.lineTo(15, 30 + bob);
+            ctx.fill();
+
+            // 3. Head
+            ctx.fillStyle = '#ffe0bd';
+            ctx.beginPath();
+            ctx.arc(0, -20 + bob, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 4. Face 
+            ctx.fillStyle = '#000';
+            if (player.state === 'hurt') {
+                ctx.fillText('><', -5, -18 + bob);
+            } else {
+                ctx.beginPath(); ctx.arc(-5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(5, -20 + bob, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#ffaaaa';
+                ctx.beginPath(); ctx.arc(-8, -15 + bob, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(8, -15 + bob, 2, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // 5. Hair (Front) - Black
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(-10, -25 + bob, 8, 0, Math.PI * 2);
+            ctx.arc(10, -25 + bob, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 6. Limbs
+            ctx.strokeStyle = '#ffe0bd';
+            ctx.lineWidth = 4;
+            // Arms (If sliding, reach forward)
+            if (player.state === 'slide') {
+                ctx.beginPath(); ctx.moveTo(-10, -5); ctx.lineTo(-20, -30); ctx.stroke(); // Forward
+                ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(20, -30); ctx.stroke();
+            } else {
+                ctx.beginPath(); ctx.moveTo(-10, -5 + bob); ctx.lineTo(-20, 10 + bob - (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 20)); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(10, -5 + bob); ctx.lineTo(20, 10 + bob + (player.state === 'run' ? Math.sin(player.runFrame) * 10 : 0)); ctx.stroke();
+            }
+
+            // Legs
+            ctx.strokeStyle = '#fff';
+            let legL = player.state === 'run' ? Math.sin(player.runFrame) * 15 : 0;
+            let legR = player.state === 'run' ? Math.sin(player.runFrame + Math.PI) * 15 : 0;
+            if (player.state === 'jump') { legL = -10; legR = 10; }
+            if (player.state === 'slide') { legL = 10; legR = 10; } // Straight back
+
+            ctx.beginPath(); ctx.moveTo(-5, 30 + bob); ctx.lineTo(-5 + legL, 40 + bob); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(5, 30 + bob); ctx.lineTo(5 + legR, 40 + bob); ctx.stroke();
+
+            // Shoes
+            ctx.fillStyle = '#1e3a8a';
+            ctx.beginPath(); ctx.arc(-5 + legL, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(5 + legR, 42 + bob, 3, 0, Math.PI * 2); ctx.fill();
+
+            ctx.restore();
+        }
         function drawObstacle(o) {
             if (o.type === 'spike') {
                 ctx.fillStyle = '#991b1b';
