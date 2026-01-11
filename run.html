@@ -312,44 +312,7 @@
             }
         }
 
-        function resetGame() {
-            obstacles = [];
-            items = [];
-            particles = [];
-            score = 0;
-            hp = 100;
-            speed = SPEED_START;
-            frame = 0;
-
-            player.y = player.groundY;
-            player.vy = 0;
-            player.state = 'run';
-            player.jumpCount = 0;
-
-            document.getElementById('game-over').style.display = 'none';
-            document.getElementById('tutorial-msg').style.display = 'none';
-
-            isRunning = true;
-            isPaused = false;
-            requestAnimationFrame(loop);
-        }
-
-        function togglePause() {
-            if (!isRunning) return;
-            isPaused = !isPaused;
-            if (!isPaused) requestAnimationFrame(loop);
-        }
-
-        function loop() {
-            if (!isRunning) {
-                return;
-            }
-            if (isPaused) return;
-
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
+        // ... duplicates removed ...
 
         function update() {
             frame++;
