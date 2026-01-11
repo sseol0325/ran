@@ -856,6 +856,7 @@
             const savedName = localStorage.getItem('ranrun_nickname');
             if (savedName) {
                 document.getElementById('nickname').value = savedName;
+                currentNickname = savedName; // Sync global var for highlighting
             }
             loadRankings(); // Load rankings on start
         });
