@@ -190,7 +190,7 @@
     ">
         <h1 style="font-size: 40px; margin-bottom: 20px; text-shadow: 2px 2px 0 #000;">RanRun</h1>
 
-        <input type="text" id="nickname" placeholder="Enter Nickname" maxlength="8" style="
+        <input type="text" id="nickname" placeholder="닉네임 입력" maxlength="8" style="
             padding: 15px; font-size: 20px; border-radius: 10px; border: none;
             width: 200px; text-align: center; margin-bottom: 20px;
             font-family: 'Pretendard';
@@ -198,14 +198,14 @@
 
         <div
             style="font-size: 18px; text-align: center; margin-bottom: 30px; line-height: 1.5; text-shadow: 1px 1px 0 #000;">
-            PC: SPACE=JUMP | DOWN=SLIDE<br>
-            MOBILE: TOUCH LEFT=JUMP | TOUCH RIGHT=SLIDE
+            PC: 스페이스=점프 | 아래화살표=슬라이드<br>
+            모바일: 왼쪽터치=점프 | 오른쪽터치=슬라이드
         </div>
         <button onclick="startGame()" style="
             padding: 20px 50px; font-size: 30px; background: #ff69b4; color: white;
             border: none; border-radius: 20px; box-shadow: 0 5px 0 #c2185b;
             animation: pulse 1.5s infinite; cursor: pointer;
-        ">TAP TO START</button>
+        ">게임 시작</button>
     </div>
     <style>
         @keyframes pulse {
@@ -224,17 +224,17 @@
     </style>
 
     <div id="game-over">
-        <h1 style="font-size:40px; margin-bottom:10px;">GAME OVER</h1>
-        <p style="font-size:24px; margin:0;">Score: <span id="final-score">0</span></p>
+        <h1 style="font-size:40px; margin-bottom:10px;">게임 오버</h1>
+        <p style="font-size:24px; margin:0;">점수: <span id="final-score">0</span></p>
 
         <div id="leaderboard">
-            <div style="text-align:center; color:#ddd;">Loading Ranking...</div>
+            <div style="text-align:center; color:#ddd;">랭킹 불러오는 중...</div>
         </div>
 
         <div style="display:flex; gap:10px;">
-            <button onpointerdown="event.stopPropagation()" onclick="resetGame()">RETRY</button>
+            <button onpointerdown="event.stopPropagation()" onclick="resetGame()">재시작</button>
             <button onpointerdown="event.stopPropagation()" onclick="location.href='games.html'"
-                style="background:#555; color:#fff; box-shadow:0 4px 0 #333; margin-top:20px;">EXIT</button>
+                style="background:#555; color:#fff; box-shadow:0 4px 0 #333; margin-top:20px;">나가기</button>
         </div>
     </div>
 
@@ -853,7 +853,7 @@
             const name = nickInput.value.trim();
 
             if (!name) {
-                alert("Please enter a nickname!");
+                alert("닉네임을 입력해주세요!");
                 nickInput.focus();
                 return;
             }
@@ -871,7 +871,7 @@
             if (db) {
                 db.collection('ranrun_scores').doc(name).get().then(doc => {
                     if (doc.exists) {
-                        alert("This nickname is already taken via Ranking! Please choose another.");
+                        alert("이미 존재하는 닉네임입니다. 다른 이름을 사용해주세요.");
                     } else {
                         proceedGame(name);
                     }
