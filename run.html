@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>RanRun (Ranbot Run)</title>
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Pretendard', sans-serif;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #score-box {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            align-self: flex-start;
+        }
+
+        #hp-bar {
+            width: 300px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #fff;
+        }
+
+        #hp-fill {
+            width: 100%;
+            height: 100%;
+            background: #22c55e;
+            transition: width 0.2s;
+        }
+
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            pointer-events: auto;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            z-index: 100;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 15px;
+            border: none;
+            cursor: pointer;
+            background: #facc15;
+            color: #000;
+            box-shadow: 0 4px 0 #ca8a04;
+            transition: transform 0.1s;
+            margin-top: 20px;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .tutorial {
+            position: absolute;
+            bottom: 20%;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 20px;
+            text-shadow: 1px 1px 2px #000;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.5
+            }
+        }
+
+        #pause-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            border: 1px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="ui-layer">
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="hp-bar">
+                <div id="hp-fill"></div>
+            </div>
+            <div id="score-box">0</div>
+        </div>
+        <button id="pause-btn" onclick="togglePause()">II</button>
+    </div>
+
+    <div id="tutorial-msg" class="tutorial">SPACE to JUMP | DOWN to SLIDE</div>
+
+    <div id="game-over">
+        <h1 style="font-size:60px; margin-bottom:10px;">GAME OVER</h1>
+        <p style="font-size:24px; margin-bottom:30px;">Score: <span id="final-score">0</span></p>
+        <button onclick="startGame()">RETRY</button>
+        <button onclick="location.href='games.html'"
+            style="background:#555; color:#fff; box-shadow:0 4px 0 #333; margin-top:10px;">EXIT</button>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- Assets -->
+    <div style="display:none;">
+        <img id="img-player" src="run_player.png">
+        <img id="img-bg" src="run_bg.png">
+        <img id="img-tiles" src="run_tiles.png">
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Config
+        const GRAVITY = 0.6;
+        const JUMP_POWER = -12;
+        const SPEED_START = 8;
+        let speed = SPEED_START;
+
+        // Game State
+        let isRunning = false;
+        let isPaused = false;
+        let score = 0;
+        let frame = 0;
+        let hp = 100;
+
+        // Assets Refs
+        const imgPlayer = document.getElementById('img-player');
+        const imgBg = document.getElementById('img-bg');
+        const imgTiles = document.getElementById('img-tiles');
+
+        // Objects
+        let player = {
+            x: 100, y: 0, w: 80, h: 80, vy: 0,
+            state: 'run', // run, jump, slide, hurt
+            groundY: 0,
+            isGrounded: false,
+            jumpCount: 0,
+            animTimer: 0
+        };
+
+        let obstacles = []; // {x, y, w, h, type}
+        let items = []; // {x, y, w, h, type}
+        let particles = [];
+        let bgX = 0;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.groundY = canvas.height - 150;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function startGame() {
+            obstacles = [];
+            items = [];
+            particles = [];
+            score = 0;
+            hp = 100;
+            speed = SPEED_START;
+            frame = 0;
+
+            player.y = player.groundY;
+            player.vy = 0;
+            player.state = 'run';
+
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('tutorial-msg').style.display = 'block';
+            setTimeout(() => document.getElementById('tutorial-msg').style.display = 'none', 3000);
+
+            isRunning = true;
+            loop();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            if (!isPaused) loop();
+        }
+
+        function loop() {
+            if (!isRunning || isPaused) return;
+
+            update();
+            render();
+
+            requestAnimationFrame(loop);
+        }
+
+        function update() {
+            frame++;
+            speed += 0.001; // Accel
+            bgX = (bgX + speed * 1) % imgBg.width; // Parallax
+
+            // Player Physics
+            if (player.state !== 'slide') {
+                player.h = 80; // Normal height
+            }
+
+            if (player.y < player.groundY) {
+                player.vy += GRAVITY;
+                player.isGrounded = false;
+            } else if (player.y >= player.groundY) {
+                player.y = player.groundY;
+                player.vy = 0;
+                player.isGrounded = true;
+                player.jumpCount = 0;
+                if (player.state === 'jump') player.state = 'run';
+            }
+            player.y += player.vy;
+            player.animTimer++;
+
+            // Obstacle Spawn
+            if (frame % Math.floor(1000 / speed) === 0) { // Adapt spawn rate
+                const type = Math.random() < 0.7 ? 'ground' : 'sky';
+                if (type === 'ground') {
+                    // Spike or Block
+                    const variant = Math.random() < 0.5 ? 'spike' : 'block';
+                    obstacles.push({
+                        x: canvas.width,
+                        y: player.groundY + (variant === 'spike' ? 40 : 10), // Spike low, Block bit high
+                        w: 60, h: variant === 'spike' ? 40 : 70,
+                        type: variant
+                    });
+                    // Add Items above
+                    if (Math.random() > 0.3) {
+                        spawnItemPattern(canvas.width, player.groundY - 150);
+                    }
+                } else {
+                    // Sky Block or Hanging
+                    obstacles.push({
+                        x: canvas.width,
+                        y: player.groundY - 120, // Jump height
+                        w: 80, h: 40,
+                        type: 'platform'
+                    });
+                    // Add Items on it
+                    spawnItemPattern(canvas.width, player.groundY - 180);
+                }
+            }
+
+            // Move Objects
+            obstacles.forEach(o => o.x -= speed);
+            items.forEach(i => i.x -= speed);
+            particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; p.vy += 0.5; });
+
+            // Cleanup
+            obstacles = obstacles.filter(o => o.x + o.w > 0);
+            items = items.filter(i => i.x + i.w > 0 && !i.collected);
+            particles = particles.filter(p => p.life > 0);
+
+            // Collision
+            checkCollisions();
+
+            // Update UI
+            document.getElementById('score-box').innerText = Math.floor(score);
+            document.getElementById('hp-fill').style.width = hp + '%';
+
+            if (hp <= 0) gameOver();
+        }
+
+        function spawnItemPattern(x, y) {
+            for (let i = 0; i < 3; i++) {
+                items.push({
+                    x: x + i * 60, y: y - Math.sin(i) * 20,
+                    w: 40, h: 40, type: Math.random() < 0.1 ? 'potion' : (Math.random() < 0.3 ? 'jelly' : 'coin')
+                });
+            }
+        }
+
+        function checkCollisions() {
+            // Player Rect
+            const pRect = {
+                x: player.x + 20, // Hitbox shrink
+                y: player.y + (player.state === 'slide' ? 40 : 10),
+                w: player.w - 40,
+                h: player.state === 'slide' ? 40 : (player.h - 20)
+            };
+
+            // Obstacles
+            obstacles.forEach(o => {
+                if (o.hit) return;
+                if (rectIntersect(pRect, o)) {
+                    o.hit = true;
+                    takeDamage();
+                }
+            });
+
+            // Items
+            items.forEach(i => {
+                if (rectIntersect(pRect, i)) {
+                    i.collected = true;
+                    if (i.type === 'coin') score += 100;
+                    if (i.type === 'jelly') score += 200;
+                    if (i.type === 'potion') { hp = Math.min(100, hp + 20); createTextEffect(player.x, player.y, 'HEAL!', '#0f0'); }
+
+                    // Sparkle
+                    for (let k = 0; k < 5; k++) particles.push({ x: i.x, y: i.y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 20, color: '#ff0' });
+                }
+            });
+        }
+
+        function rectIntersect(r1, r2) {
+            return !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x || r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
+        }
+
+        function takeDamage() {
+            if (player.state === 'hurt') return; // I-frames
+            hp -= 20;
+            player.state = 'hurt';
+            player.vy = -5; // Knockback
+            setTimeout(() => { if (hp > 0) player.state = 'run'; }, 500);
+
+            // Shake
+            canvas.style.transform = 'translate(5px, 5px)';
+            setTimeout(() => canvas.style.transform = 'none', 100);
+        }
+
+        function gameOver() {
+            isRunning = false;
+            document.getElementById('final-score').innerText = Math.floor(score);
+            document.getElementById('game-over').style.display = 'flex';
+        }
+
+        function createTextEffect(x, y, text, color) {
+            // Can implement later
+        }
+
+        // Render
+        function render() {
+            // BG
+            // Draw seamless loop
+            // imgBg might be small, pattern repeating?
+            // Assuming imgBg is wide.
+            if (imgBg.complete) {
+                let w = window.innerHeight * (imgBg.width / imgBg.height); // maintain aspect ratio based on height
+                let h = window.innerHeight;
+                let x = -(bgX % w);
+                ctx.drawImage(imgBg, x, 0, w, h);
+                ctx.drawImage(imgBg, x + w, 0, w, h);
+                ctx.drawImage(imgBg, x + w * 2, 0, w, h);
+            } else {
+                ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, canvas.width, canvas.height); // Sky fallback
+            }
+
+            // Ground
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(0, player.groundY + 80, canvas.width, 200);
+
+            // Obstacles
+            obstacles.forEach(o => {
+                // If tilesheet exists
+                // Spike: 0,1. Block: 0,0. (Assuming grid from prompt)
+                // Just draw rects for now or simple mapping
+                if (o.type === 'spike') {
+                    ctx.fillStyle = '#f00';
+                    ctx.beginPath(); ctx.moveTo(o.x, o.y + o.h); ctx.lineTo(o.x + o.w / 2, o.y); ctx.lineTo(o.x + o.w, o.y + o.h); ctx.fill();
+                } else {
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
+                }
+            });
+
+            // Items
+            items.forEach(i => {
+                ctx.fillStyle = i.type === 'coin' ? '#ffd700' : (i.type === 'potion' ? '#ff0000' : '#00ffff');
+                ctx.beginPath(); ctx.arc(i.x + i.w / 2, i.y + i.h / 2, i.w / 2, 0, Math.PI * 2); ctx.fill();
+            });
+
+            // Player
+            // Sprite Logic
+            // Grid: 2x2 or similar from prompt.
+            // Let's assume standard spritesheet usage or fallback
+            if (player.state === 'hurt') ctx.globalAlpha = 0.5;
+
+            ctx.fillStyle = '#fff';
+            if (player.state === 'slide') ctx.fillRect(player.x, player.y + 40, player.w, 40);
+            else ctx.fillRect(player.x, player.y, player.w, player.h); // Fallback box
+
+            // Try to use image if loaded
+            if (imgPlayer.complete && imgPlayer.naturalWidth > 0) {
+                // Simple mapping guess:
+                // 0: Run1, 1: Run2, 2: Jump, 3: Slide, 4: Hurt?
+                // Prompt was: Run(4), Jump, Slide.
+                // let's assume one row? Or Grid.
+                // Let's implement full sprite logic later, for now just draw full image scaled
+                // Or draw specific region if savvy.
+                // Let's assume generated image is messy and just draw it whole for fun or simple crop
+
+                // Better: Draw static for now to avoid weird cropping
+                ctx.drawImage(imgPlayer, player.x - 20, player.y - 20, 120, 120);
+            }
+
+            ctx.globalAlpha = 1.0;
+
+            // Particles
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 5, 5);
+            });
+        }
+
+        // Controls
+        window.addEventListener('keydown', e => {
+            if (!isRunning) {
+                if (e.code === 'Space') startGame();
+                return;
+            }
+
+            if (e.code === 'Space') {
+                if (player.isGrounded) {
+                    player.vy = JUMP_POWER;
+                    player.state = 'jump';
+                    player.isGrounded = false;
+                    player.jumpCount = 1;
+                } else if (player.jumpCount < 2) { // Double Jump
+                    player.vy = JUMP_POWER * 0.8;
+                    player.jumpCount = 2;
+                    // Spin anim?
+                    createDust(player.x, player.y + 80);
+                }
+            }
+
+            if (e.code === 'ArrowDown') {
+                if (player.isGrounded) {
+                    player.state = 'slide';
+                    player.h = 40;
+                } else {
+                    player.vy += 10; // Stomp
+                }
+            }
+        });
+
+        window.addEventListener('keyup', e => {
+            if (e.code === 'ArrowDown') {
+                if (player.state === 'slide') {
+                    player.state = 'run';
+                    player.h = 80;
+                }
+            }
+        });
+
+        function createDust(x, y) {
+            for (let i = 0; i < 5; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 2, life: 10, color: '#fff' });
+        }
+
+        // Start
+        // wait for assets or start
+        // Auto start for preview
+        setTimeout(startGame, 100);
+
+    </script>
+</body>
+
+</html>
