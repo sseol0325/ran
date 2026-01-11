@@ -818,9 +818,17 @@
         // Left Half: Jump (Tap)
         // Right Half: Slide (Hold)
 
+        function getSafeTarget(e) {
+            let t = e.target;
+            // If text node (Type 3), get parent
+            if (t.nodeType === 3) t = t.parentNode;
+            return t;
+        }
+
         document.addEventListener('touchstart', (e) => {
+            const target = getSafeTarget(e);
             // IGNORE touches on buttons (Pause, Retry, Exit) so they can click
-            if (e.target.closest('button')) return;
+            if (target && target.closest('button')) return;
 
             e.preventDefault(); // Prevent scrolling/zooming for game control
 
@@ -835,7 +843,8 @@
         }, { passive: false });
 
         document.addEventListener('touchend', (e) => {
-            if (e.target.closest('button')) return;
+            const target = getSafeTarget(e);
+            if (target && target.closest('button')) return;
 
             e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
@@ -847,8 +856,9 @@
         });
 
         document.addEventListener('mousedown', (e) => {
+            const target = getSafeTarget(e);
             // Allow mouse interaction with buttons
-            if (e.target.closest('button')) return;
+            if (target && target.closest('button')) return;
             handleInput('jump');
         });
 
