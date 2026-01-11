@@ -772,13 +772,15 @@
             for (let i = 0; i < 5; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5, life: 15, color: color });
         }
 
-        // --- MODERN INPUT HANDLING (POINTER EVENTS) ---
-        // Replacing all touch/mouse listeners with Pointer Events users
+        // --- HYBRID INPUT HANDLING (ROBUST) ---
+        // Reverting to explicit Touch + Mouse for maximum compatibility
 
         function handleInput(type) {
             if (!isRunning) {
-                if (frame === 0 && document.getElementById('game-over').style.display === 'none') {
-                    startFirst();
+                // Start game on ANY input if not running and no game over screen
+                if (document.getElementById('game-over').style.display === 'none') {
+                    if (frame === 0) startFirst(); // Initial validation
+                    else if (isPaused) togglePause(); // Unpause if paused
                 }
                 return;
             }
@@ -793,66 +795,55 @@
             }
         }
 
-        // Map to track active pointers (multitouch support)
-        const activePointers = new Map();
+        // 1. TOUCH EVENTS (Mobile)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Stop Scroll/Zoom
+            // Use changedTouches to handle simultaneous multi-touch
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.clientX < window.innerWidth / 2) {
+                    handleInput('jump');
+                } else {
+                    handleInput('slide_down');
+                }
+            }
+        }, { passive: false });
 
-        window.addEventListener('pointerdown', (e) => {
-            // If we are touching a button, the HTML handler stops propagation.
-            // So if we reach here, it's a game input.
-
-            // Store pointer
-            activePointers.set(e.pointerId, e.clientX);
-
-            processInput(e.clientX, 'down');
-        });
-
-        window.addEventListener('pointermove', (e) => {
-            // Update position if dragging (optional, but good for sliding adjustment)
-            if (activePointers.has(e.pointerId)) {
-                activePointers.set(e.pointerId, e.clientX);
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.clientX >= window.innerWidth / 2) {
+                    handleInput('slide_up');
+                }
             }
         });
 
-        window.addEventListener('pointerup', (e) => {
-            if (activePointers.has(e.pointerId)) {
-                const startX = activePointers.get(e.pointerId);
-                processInput(startX, 'up'); // Use original start pos to determine action
-                activePointers.delete(e.pointerId);
+        // 2. MOUSE EVENTS (PC)
+        canvas.addEventListener('mousedown', (e) => {
+            // Left Click only
+            if (e.button === 0) {
+                handleInput('jump');
             }
         });
 
-        window.addEventListener('pointercancel', (e) => {
-            if (activePointers.has(e.pointerId)) {
-                processInput(activePointers.get(e.pointerId), 'up');
-                activePointers.delete(e.pointerId);
-            }
-        });
-
-        function processInput(x, type) {
-            const isLeft = x < window.innerWidth / 2;
-
-            if (type === 'down') {
-                if (isLeft) handleInput('jump');  // Left = Jump
-                else handleInput('slide_down');   // Right = Slide
-            } else if (type === 'up') {
-                if (!isLeft) handleInput('slide_up'); // Right Release = Slide Up
-            }
-        }
-
-        // Keep Keyboard listeners for PC
+        // 3. KEYBOARD EVENTS (PC)
         window.addEventListener('keydown', e => {
             const code = e.code;
 
+            // Restart on Game Over
             if ((code === 'Space' || code === 'Enter') && document.getElementById('game-over').style.display !== 'none') {
                 resetGame();
                 return;
             }
 
-            if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW' || e.key === ' ') {
+            // Jump
+            if (code === 'Space' || code === 'ArrowUp' || code === 'KeyW') {
                 e.preventDefault();
                 handleInput('jump');
             }
 
+            // Slide
             if (code === 'ArrowDown' || code === 'KeyS') {
                 e.preventDefault();
                 handleInput('slide_down');
