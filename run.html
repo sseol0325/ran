@@ -934,6 +934,61 @@
             }
         }
 
+        // --- RANKING CLEANUP TOOL ---
+        async function cleanDuplicates() {
+            if (!db) return;
+            const password = prompt("관리자 비밀번호를 입력하세요 (이 기능을 실행하면 중복 기록이 삭제됩니다)", "1234");
+            if (password !== "1234") return alert("비밀번호가 틀렸습니다.");
+
+            if (!confirm("정말로 랭킹 중복을 정리하시겠습니까?\n모든 플레이어의 최고 점수 1개만 남기고 나머지는 삭제됩니다.")) return;
+
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = "<div style='text-align:center;'>정리 중...</div>";
+
+            try {
+                const snapshot = await db.collection('ranrun_scores').get();
+                const bestScores = {};
+                const batch = db.batch();
+
+                // 1. Find Best Scores
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const name = data.name;
+                    if (!name) return; // Skip invalid
+
+                    if (!bestScores[name] || data.score > bestScores[name].score) {
+                        bestScores[name] = {
+                            name: name,
+                            score: data.score
+                        };
+                    }
+                    // Delete EVERY document we find (we will re-add the best ones)
+                    // This ensures random IDs are gone and we normalize to doc(name)
+                    batch.delete(doc.ref);
+                });
+
+                // 2. Re-save Best Scores
+                for (const name in bestScores) {
+                    const data = bestScores[name];
+                    const ref = db.collection('ranrun_scores').doc(name);
+                    batch.set(ref, {
+                        name: data.name,
+                        score: data.score,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                await batch.commit();
+                alert("정리 완료! 중복된 랭킹이 제거되었습니다.");
+                loadRankings();
+
+            } catch (err) {
+                console.error(err);
+                alert("오류 발생: " + err.message);
+                loadRankings();
+            }
+        }
+
         function loadRankings() {
             if (!db) return;
             const leaderboard = document.getElementById('leaderboard');
@@ -948,7 +1003,6 @@
                     let rank = 1;
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        // Highlight Me
                         const isMe = data.name === currentNickname;
                         html += `
                             <div class="rank-item" style="${isMe ? 'color:#ffff00; font-weight:bold;' : 'color:#eee;'}">
@@ -958,6 +1012,16 @@
                         `;
                         rank++;
                     });
+
+                    // Admin Button (Bottom of list)
+                    html += `
+                        <div style="text-align:center; margin-top:10px;">
+                            <span onclick="cleanDuplicates()" style="font-size:12px; color:#aaa; cursor:pointer; text-decoration:underline;">
+                                [관리자: 랭킹 중복 정리]
+                            </span>
+                        </div>
+                    `;
+
                     leaderboard.innerHTML = html;
                 })
                 .catch(err => {
