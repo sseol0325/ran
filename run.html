@@ -197,9 +197,21 @@
         ">
 
         <div
-            style="font-size: 18px; text-align: center; margin-bottom: 30px; line-height: 1.5; text-shadow: 1px 1px 0 #000;">
+            style="font-size: 18px; text-align: center; margin-bottom: 20px; line-height: 1.5; text-shadow: 1px 1px 0 #000;">
             PC: 스페이스=점프 | 아래화살표=슬라이드<br>
             모바일: 왼쪽터치=점프 | 오른쪽터치=슬라이드
+        </div>
+
+        <!-- Start Screen Leaderboard -->
+        <div id="start-leaderboard" style="
+            width: 90%; max-width: 400px; 
+            background: rgba(0, 0, 0, 0.3); 
+            border-radius: 15px; padding: 15px; 
+            max-height: 150px; overflow-y: auto; 
+            font-size: 14px; margin-bottom: 20px;
+            box-sizing: border-box;
+        ">
+            <div style="text-align:center; color:#ddd;">순위 로딩 중...</div>
         </div>
         <button onclick="startGame()" style="
             padding: 20px 50px; font-size: 30px; background: #ff69b4; color: white;
@@ -865,11 +877,11 @@
             if (!db) return;
             // Update BOTH leaderboards
             const targets = [document.getElementById('leaderboard'), document.getElementById('start-leaderboard')];
-            
+
             targets.forEach(el => {
                 if (el) el.innerHTML = "<div style='text-align:center;'>순위 로딩 중...</div>";
             });
-            
+
             db.collection('ranrun_scores')
                 .orderBy('score', 'desc')
                 .limit(10)
@@ -879,7 +891,7 @@
                     let rank = 1;
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        const isMe = data.name === currentNickname; 
+                        const isMe = data.name === currentNickname;
                         html += `
                             <div class="rank-item" style="${isMe ? 'color:#ffff00; font-weight:bold;' : 'color:#eee;'}">
                                 <span>${rank}. ${data.name}</span>
@@ -888,7 +900,7 @@
                         `;
                         rank++;
                     });
-                    
+
                     // Admin Button (Bottom of list)
                     html += `
                         <div style="text-align:center; margin-top:10px;">
@@ -900,7 +912,7 @@
                             </button>
                         </div>
                     `;
-                    
+
                     targets.forEach(el => {
                         if (el) el.innerHTML = html;
                     });
