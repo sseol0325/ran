@@ -1139,8 +1139,11 @@
 
         // TOUCH START (Global)
         document.addEventListener('touchstart', (e) => {
-            // Allow Button AND INPUT Clicks
-            if (e.target.closest('button') || e.target.closest('input')) return;
+            // Allow Button, INPUT, and Leaderboard (for scrolling)
+            if (e.target.closest('button') ||
+                e.target.closest('input') ||
+                e.target.closest('#leaderboard') ||
+                e.target.closest('#start-leaderboard')) return;
 
             // Prevent Default (Scroll/Zoom)
             if (e.cancelable) e.preventDefault();
