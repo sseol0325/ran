@@ -353,6 +353,8 @@
         function resetGame() {
             if (loopId) cancelAnimationFrame(loopId);
 
+            document.getElementById('game-over').style.display = 'none';
+
             isRunning = true;
             isPaused = false;
             score = 0;
